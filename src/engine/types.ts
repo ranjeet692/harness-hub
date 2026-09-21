@@ -59,8 +59,21 @@ export interface RunState {
   lostMemory: boolean;
   overflowNoted: boolean;
   falseCount: number;
+  /** The tool call in flight (or last made), for scenes that animate the world. */
+  now?: NowCall | null;
+  /** Set once the run has reported and scored. */
+  finished?: boolean;
   // domain-specific fields
   [key: string]: any;
+}
+
+export interface NowCall {
+  tool: string;
+  args?: Record<string, unknown>;
+  /** Every tool in a parallel round. */
+  tools?: string[];
+  /** Bumps on every call, so a scene can restart an animation for a repeated call. */
+  seq: number;
 }
 
 export interface RunResult {
@@ -123,5 +136,7 @@ export interface Domain {
   onRound?(S: RunState): void;
   onThink?(S: RunState): void;
   Scene?: ComponentType<{ S: RunState }>;
+  /** "wide" puts the scene above the timeline at full width; the default sits in the side panel. */
+  sceneLayout?: "wide" | "side";
   live?: LiveSpec;
 }

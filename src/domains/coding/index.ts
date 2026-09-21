@@ -552,5 +552,6 @@ export const coding: Domain = {
     ["Secrets leaked", "leaked", "low", String],
   ],
   Scene: RepoScene,
+  sceneLayout: "wide",
   live: codingLive,
 };

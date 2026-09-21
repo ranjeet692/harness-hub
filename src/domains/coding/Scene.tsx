@@ -4,8 +4,8 @@ const BADGE: Record<string, [string, string]> = {
   read: ["R", "info"], M: ["M", "warn"], "!": ["!", "danger"], leak: ["leaked", "danger"], "+": ["+", "good"],
 };
 
-/** A mini repo view: file tree with change markers, the branch, and a test bar. */
-export function RepoScene({ S }: { S: RunState }) {
+/** Compact repo view (kept for small spaces). */
+export function MiniRepoScene({ S }: { S: RunState }) {
   const repo = S.repo ?? { files: {}, tests: { pass: 0, fail: 0 }, branch: "main" };
   const total = repo.tests.pass + repo.tests.fail || 1;
   const passPct = (repo.tests.pass / total) * 100;
@@ -31,3 +31,5 @@ export function RepoScene({ S }: { S: RunState }) {
     </div>
   );
 }
+
+export { CodeEditor as RepoScene } from "./Editor";

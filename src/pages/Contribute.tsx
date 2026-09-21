@@ -32,11 +32,11 @@ export const pharmacy: Domain = {
 
 export function Contribute() {
   return (
-    <div className="wrap narrow">
+    <div className="page doc-single">
       <article className="prose">
         <p className="eyebrow">Contribute</p>
         <h1>Add the next harness</h1>
-        <p className="dek" style={{ fontSize: 18 }}>
+        <p className="lede">
           Every domain on the hub runs on one shared engine. A new domain is a single TypeScript module. You describe the world, the edge cases and how each harness responds, and you get the console, the concept board, the scorecard and the tests for free.
         </p>
 

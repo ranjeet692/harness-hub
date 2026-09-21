@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
 import { CONCEPTS, GROUPS } from "../engine/concepts";
-import { allSwitches, runInstant } from "../engine/run";
+import { allSwitches, runInstant, type Run } from "../engine/run";
 import type { RunResult } from "../engine/types";
-import { DOMAINS } from "../domains";
+import { DOMAINS, DOMAIN_BY_ID } from "../domains";
+import { CodeEditor } from "../domains/coding/Editor";
 import { LoopFigure } from "../components/LoopFigure";
 import { href } from "../router";
 
 type Scores = Record<string, { h: RunResult; n: RunResult }>;
 
+const GROUP_BLURB: Record<string, string> = {
+  "Context": "What the model sees each round, and what it must never forget.",
+  "Tools": "What the model can do, and how bad calls are caught.",
+  "Loop control": "How the loop recovers, retries, and knows when to stop.",
+  "Safety": "What needs a person, what's capped, and what's never trusted.",
+  "Evaluation": "How you know the harness is getting better.",
+};
+
 export function Home() {
   const [scores, setScores] = useState<Scores>({});
+  const [demo, setDemo] = useState<Run | null>(null);
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -18,85 +28,118 @@ export function Home() {
         const all = allSwitches(d);
         out[d.id] = { h: (await runInstant(d, "hardened", all)).result!, n: (await runInstant(d, "naive", all)).result! };
       }
-      if (alive) setScores(out);
+      const coding = DOMAIN_BY_ID.coding;
+      const shot = await runInstant(coding, "hardened", allSwitches(coding));
+      if (alive) { setScores(out); setDemo(shot); }
     })();
     return () => { alive = false; };
   }, []);
 
   return (
-    <div className="wrap">
+    <div className="home">
       <section className="hero">
-        <div>
-          <p className="eyebrow">harness-hub</p>
-          <h1>The model is the engine. <em>The harness is the car.</em></h1>
-          <p className="lede">
-            An AI agent is a model plus everything around it: the context it sees, the tools it can call, the loop that keeps it going,
-            and the guardrails that stop it doing damage. harness-hub rebuilds everyday systems as agent harnesses, so you can watch
-            each of those pieces work, and see what breaks when they're missing.
+        <p className="eyebrow">An open-source playground for people who build AI agents</p>
+        <h1>The model is the engine.<br /><span>The harness is the car.</span></h1>
+        <p className="lede">
+          Four everyday agents, each run twice: once inside a hardened harness, once inside a naive one.
+          Watch every check, every retry, and every moment the agent stops to ask you.
+        </p>
+        <div className="hero-cta">
+          <a className="btn btn-primary btn-lg" href={href("/d/coding")}>Try the coding agent</a>
+          <a className="more" href={href("/concepts")}>Learn the 20 concepts <span aria-hidden="true">›</span></a>
+        </div>
+      </section>
+
+      <section className="showcase" aria-label="A finished run of the coding agent">
+        <div className="showcase-frame">
+          {demo ? <CodeEditor S={demo.S} /> : <div className="ide ide-placeholder" />}
+        </div>
+        <p className="showcase-caption">
+          A hardened run of the coding agent: one fix, one regression test, the suite green, one pull request, and <code>.env</code> never touched.
+        </p>
+      </section>
+
+      <section className="band">
+        <div className="band-text">
+          <p className="eyebrow">What's a harness?</p>
+          <h2>Everything around the model that makes it safe to let it act.</h2>
+          <p>
+            The model only chooses the next step. The harness decides what the model sees, which tools it may call,
+            what happens when a call fails, when to stop and ask a person, and whether the job was actually done.
           </p>
-          <div className="hero-ctas">
-            <a className="btn-link primary" href={href("/d/butler")}>Run the home butler →</a>
-            <a className="btn-link ghost" href={href("/concepts")}>Learn the 20 concepts</a>
-          </div>
           <p className="cite">
-            Framing borrowed from the VS Code team's write-up,{" "}
-            <a href="https://code.visualstudio.com/blogs/2026/05/15/agent-harnesses-github-copilot-vscode" target="_blank" rel="noreferrer">The Coding Harness Behind GitHub Copilot in VS Code</a>.
+            The framing comes from the VS Code team's write-up, <a href="https://code.visualstudio.com/blogs/2026/05/15/agent-harnesses-github-copilot-vscode" target="_blank" rel="noreferrer">The Coding Harness Behind GitHub Copilot in VS Code</a>.
           </p>
         </div>
         <LoopFigure />
       </section>
 
-      <section aria-labelledby="domains-h">
+      <section className="section" aria-labelledby="h-harnesses">
         <div className="section-head">
-          <h2 id="domains-h">Four harnesses, every edge case</h2>
-          <p>Each one runs the same scenario through a hardened harness and a naive one. The numbers below come from running them just now, with every edge case switched on.</p>
+          <h2 id="h-harnesses">Four harnesses. Every edge case.</h2>
+          <p>The same scenario through both harnesses, with every edge case switched on. The numbers are computed in your browser when this page loads.</p>
         </div>
-        <div className="domain-grid">
+        <div className="harness-grid">
           {DOMAINS.map(d => {
             const s = scores[d.id];
             return (
-              <a key={d.id} className="domain-card" href={href(`/d/${d.id}`)}>
-                <span className="num">Prototype {d.number}</span>
-                <h3>{d.title.replace(/^The /, "")}</h3>
-                <p>{d.tagline}</p>
-                {d.live && <span className="live-badge">Live model mode</span>}
-                <div className="vs" aria-label="Hardened vs naive results">
-                  <b></b><b>Hardened</b><b>Naive</b>
-                  <span>Goals met</span><span className="h">{s ? `${s.h.goals} / ${d.goals.length}` : "…"}</span><span className="n">{s ? `${s.n.goals} / ${d.goals.length}` : "…"}</span>
-                  <span>Safety incidents</span><span className="h">{s ? s.h.safety : "…"}</span><span className="n">{s ? s.n.safety : "…"}</span>
-                  <span>False claims</span><span className="h">{s ? s.h.falseClaims : "…"}</span><span className="n">{s ? s.n.falseClaims : "…"}</span>
+              <a key={d.id} className="harness-card" href={href(`/d/${d.id}`)}>
+                <div className="hc-top">
+                  <span className="hc-num">Harness {d.number}</span>
+                  {d.live && <span className="chip info">Live model</span>}
                 </div>
+                <h3>{d.shortTitle}</h3>
+                <p>{d.tagline}</p>
+                <dl className="hc-stats">
+                  <div><dt>Goals met</dt><dd><b className="good">{s ? s.h.goals : "–"}</b><span>vs</span><b className="bad">{s ? s.n.goals : "–"}</b><small>of {d.goals.length}</small></dd></div>
+                  <div><dt>Safety incidents</dt><dd><b className="good">{s ? s.h.safety : "–"}</b><span>vs</span><b className="bad">{s ? s.n.safety : "–"}</b></dd></div>
+                </dl>
+                <p className="hc-legend"><i className="good" />Hardened <i className="bad" />Naive</p>
+                <span className="more">Open the {d.shortTitle.toLowerCase()} <span aria-hidden="true">›</span></span>
               </a>
             );
           })}
         </div>
       </section>
 
-      <section aria-labelledby="concepts-h">
+      <section className="section" aria-labelledby="h-how">
         <div className="section-head">
-          <h2 id="concepts-h">The 20 concepts</h2>
-          <p>Every trace card is tagged with the concepts it exercises. Each guide explains the idea, the failure it prevents, and how to build it, then links to where it happens in each harness.</p>
+          <h2 id="h-how">How it works</h2>
+          <p>Every harness page follows the same four steps.</p>
         </div>
-        <div className="concept-groups">
+        <ol className="how">
+          <li><b>Set up the run</b><span>Pick the hardened or naive harness and switch on the things that go wrong.</span></li>
+          <li><b>Watch it play</b><span>Each model step and harness check appears as it happens. A bar at the top always says what's going on.</span></li>
+          <li><b>Answer when asked</b><span>Risky steps pause the run. The question comes to you at the bottom of the screen.</span></li>
+          <li><b>Compare</b><span>See which concepts the harness handled, and how the two harnesses scored side by side.</span></li>
+        </ol>
+      </section>
+
+      <section className="section" aria-labelledby="h-concepts">
+        <div className="section-head">
+          <h2 id="h-concepts">Twenty concepts, five groups</h2>
+          <p>Every step in a run is tagged with the concepts it exercises. Each guide covers the idea, the failure it prevents and how to build it.</p>
+        </div>
+        <div className="group-grid">
           {GROUPS.map(g => (
-            <div key={g} className="concept-col">
+            <div key={g} className="group-card">
               <h3>{g}</h3>
+              <p>{GROUP_BLURB[g]}</p>
               <ul>
-                {CONCEPTS.filter(c => c.group === g).map(c => (
-                  <li key={c.id}><a href={href(`/concepts/${c.slug}`)}>{c.label}<span>{c.summary}</span></a></li>
-                ))}
+                {CONCEPTS.filter(c => c.group === g).map(c => <li key={c.id}><a href={href(`/concepts/${c.slug}`)}>{c.label}</a></li>)}
               </ul>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="callout">
-        <div>
-          <h2>Add the next harness</h2>
-          <p>A domain is one TypeScript file: its tools, goals, edge cases and beats. The engine, the concept board, the scorecard and the tests come for free.</p>
+      <section className="cta-band">
+        <h2>Add the next harness.</h2>
+        <p>A harness is one TypeScript module: its tools, goals, edge cases and steps. The engine, timeline, scorecard and tests come with it.</p>
+        <div className="hero-cta">
+          <a className="btn btn-primary btn-lg" href={href("/contribute")}>How to contribute</a>
+          <a className="more" href="https://github.com/ranjeet692/harness-hub" target="_blank" rel="noreferrer">View on GitHub <span aria-hidden="true">›</span></a>
         </div>
-        <a className="btn-link primary" href={href("/contribute")}>How to contribute →</a>
       </section>
     </div>
   );

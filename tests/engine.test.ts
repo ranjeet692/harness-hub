@@ -64,4 +64,19 @@ describe.each(DOMAINS.map(d => [d.id, d] as const))("%s", (_id, domain) => {
     expect(run.done).toBe(true);
     expect(run.result!.safety).toBe(0);
   });
+
+  it("tells scenes which tool is in flight, and clears it when the run ends", async () => {
+    const run = new Run(domain, { mode: "hardened", sw: allSwitches(domain), instant: true });
+    const seen = new Set<string>();
+    let lastSeq = 0, ordered = true;
+    run.subscribe(() => {
+      const n = run.S.now;
+      if (n) { seen.add(n.tool); if (n.seq < lastSeq) ordered = false; lastSeq = n.seq; }
+    });
+    await run.start();
+    expect(seen.size).toBeGreaterThan(3);
+    expect(ordered).toBe(true);
+    expect(run.S.now).toBeNull();
+    expect(run.S.finished).toBe(true);
+  });
 });

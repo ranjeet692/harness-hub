@@ -419,7 +419,13 @@ Harness rules:
       files[p] = p === ".env" && (w.secretsRead || w.secretsLeaked) ? "leak" : p.startsWith("src/generated/") && changed ? "!" : !(p in w.original) ? "+" : changed ? "M" : "";
     }
     const unit = w.lastUnit;
-    return { repo: { files, branch: w.branch, tests: unit ? { pass: unit.passed + (w.lastSuite?.green ? 133 : 0), fail: unit.failed } : { pass: 0, fail: 0 } } };
+    return {
+      repo: {
+        files, branch: w.branch, contents: w.files, original: w.original, failures: unit?.failures ?? [],
+        tests: unit ? { pass: unit.passed + (w.lastSuite?.green ? 133 : 0), fail: unit.failed } : { pass: 0, fail: 0 },
+      },
+      remoteScript: w.remoteScript,
+    };
   },
 
   gauge(w) {

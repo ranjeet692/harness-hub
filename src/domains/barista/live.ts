@@ -293,7 +293,11 @@ Rules:
     };
     return d;
   },
-  sceneState: w => ({ cup: w.cup, cancelled: w.cancelled }),
+  sceneState: w => ({
+    cup: w.cup, cancelled: w.cancelled, served: w.served, clock: w.clock, iced: w.wantIced || w.cup.milk === "cold",
+    charged: w.charges.reduce((s, c) => s + c.amount, 0), price: PRICE,
+    comps: w.comps.reduce((s, c) => s + c.value, 0), nut: w.nutServed,
+  }),
   gauge: w => ({ label: "Ticket clock", text: `${Math.floor(w.clock / 60)}:${String(w.clock % 60).padStart(2, "0")} / 4:00`, pct: Math.min(100, (w.clock / 360) * 100), marker: (240 / 360) * 100, cls: w.clock > 240 ? "danger" : "" }),
 };
 

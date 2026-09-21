@@ -94,7 +94,13 @@ export class Run {
     return (text: string) => { b.text = text; this.emit(); };
   };
 
+  private seq = 0;
+  private setNow(tool: string, args?: Record<string, unknown>, tools?: string[]) {
+    this.S.now = { tool, args, tools, seq: ++this.seq };
+  }
+
   mround = (tool: string, args?: Record<string, unknown>, concepts?: ConceptId[]) => {
+    this.setNow(tool, args);
     this.S.rounds++; this.addTokens(700);
     this.domainHook("onRound");
     return this.addCard({ actor: "model", title: "Round " + this.S.rounds, code: tool + "(" + (args ? inline(args) : "") + ")", concepts });
@@ -151,6 +157,7 @@ export class Run {
     const n = this.S.H ? hardCount : naiveCount;
     for (let i = 2; i <= n; i++) {
       await this.wait(this.S.H ? 300 : 110);
+      this.setNow(tool, args);
       this.S.rounds++; this.addTokens(this.S.H ? 450 : 600);
       onEach?.(this.S);
       this.setV(c, "pending", "×" + i + ", same call, same result");
@@ -160,6 +167,7 @@ export class Run {
 
   /** One model round that dispatches several tool calls at once. */
   parallelCard = (calls: { id: string; tool: string; args: Record<string, unknown> }[], concepts?: ConceptId[]) => {
+    this.setNow(calls[0]?.tool ?? "", calls[0]?.args, calls.map(c => c.tool));
     this.S.rounds++; this.addTokens(900);
     this.domainHook("onRound");
     const card = this.addCard({ actor: "model", title: "Round " + this.S.rounds + " · " + calls.length + " calls in parallel", text: "Dispatched together, results handled one by one.", vcls: "info", concepts });
@@ -260,9 +268,11 @@ export class Run {
         await beats[i]();
         if (i < beats.length - 1) await this.checkContext();
       }
+      this.S.now = null;
       await this.report();
       this.score();
       this.done = true;
+      this.S.finished = true;
       this.emit();
       return this.result;
     } catch (e) {

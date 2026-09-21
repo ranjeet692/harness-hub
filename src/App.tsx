@@ -49,26 +49,31 @@ export function App() {
         <div className="nav-inner">
           <a className="brand" href={href("/")}>
             <span className="brand-mark" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 64 64"><path d="M14 20h36M14 32h36M14 44h36" stroke="var(--on-brass)" strokeWidth="6" strokeLinecap="round" /></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v5h-5" /></svg>
             </span>
             harness-hub
           </a>
           <div className="nav-links">
             {DOMAINS.map(d => <a key={d.id} href={href(`/d/${d.id}`)} aria-current={current(`/d/${d.id}`)}>{d.shortTitle}</a>)}
+            <span className="nav-sep" aria-hidden="true" />
             <a href={href("/concepts")} aria-current={current("/concepts")}>Concepts</a>
             <a href={href("/contribute")} aria-current={current("/contribute")}>Contribute</a>
             <a href={REPO} target="_blank" rel="noreferrer">GitHub</a>
           </div>
-          <button type="button" className="theme-btn" onClick={cycleTheme} aria-label={`Theme: ${theme}. Click to change.`}>
-            {theme === "system" ? "Auto" : theme === "light" ? "Light" : "Dark"}
+          <button type="button" className="theme-btn" onClick={cycleTheme} aria-label={`Theme: ${theme}. Click to change.`} title={`Theme: ${theme}`}>
+            {theme === "dark"
+              ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
+              : theme === "light"
+                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" /></svg>}
           </button>
         </div>
       </nav>
       <main id="main">{page}</main>
       <footer className="site-foot">
         <div className="site-foot-inner">
-          <span>harness-hub: everyday systems rebuilt as AI agent harnesses. MIT licensed.</span>
-          <span><a href={REPO} target="_blank" rel="noreferrer">Source on GitHub</a> · <a href={href("/contribute")}>Add a domain</a></span>
+          <p><b>harness-hub</b> · Everyday systems rebuilt as AI agent harnesses. MIT licensed.</p>
+          <p><a href={REPO} target="_blank" rel="noreferrer">Source on GitHub</a><a href={href("/concepts")}>Concepts</a><a href={href("/contribute")}>Add a harness</a></p>
         </div>
       </footer>
     </>

@@ -39,7 +39,7 @@ export function LoopFigure() {
         <path d="M428 210 Q428 274 338 274" className="fig-arrow" markerEnd="url(#ah)" />
         <path d="M184 274 Q92 274 92 212" className="fig-arrow" markerEnd="url(#ah)" />
       </svg>
-      <figcaption>Every card in a trace is one of these steps. The model only decides; everything around it is the harness.</figcaption>
+      <figcaption>Every step in a run is one of these. The model only decides; everything around it is the harness.</figcaption>
     </figure>
   );
 }

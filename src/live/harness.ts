@@ -32,6 +32,8 @@ export interface LiveState {
   status: "idle" | "running" | "done" | "stopped" | "error";
   error?: string;
   memoryLost: boolean;
+  /** The tool call in flight (or last made), for the scene. */
+  now: { tool: string; args?: Record<string, unknown>; seq: number } | null;
 }
 
 const INJECTION = /ignore (all |any )?previous instructions|\[system\]|disregard (your|the) (rules|instructions)|note for ai agents|ai agents?:/i;
@@ -67,6 +69,7 @@ export class LiveRun<W = any> {
     this.state = {
       rounds: 0, lastInput: 0, inputTotal: 0, outputTotal: 0, retries: 0, approvals: 0, unapproved: 0,
       hit: {}, goals: {}, devices: spec.devices(this.world), incidents: [], finalText: "", status: "idle", memoryLost: false,
+      now: null,
     };
   }
 
@@ -146,6 +149,8 @@ export class LiveRun<W = any> {
     const visible = tool && (this.H ? tool.tier !== "never" : true);
     const result = (content: string, isError = false): ContentBlock => ({ type: "tool_result", tool_use_id: use.id, content, is_error: isError || undefined });
     const input = use.input ?? {};
+    this.state.now = { tool: use.name, args: input as Record<string, unknown>, seq: (this.state.now?.seq ?? 0) + 1 };
+    this.emit();
 
     if (!visible) {
       row?.("unknown tool", "danger");
@@ -394,6 +399,7 @@ export class LiveRun<W = any> {
     if (!this.H && this.state.incidents.some(i => i.safety && /injected|discount|drawer/i.test(i.text))) this.hit("inject", "miss");
     this.hit("eval");
     if (complete) this.state.status = "done";
+    this.state.now = null;
     const met = Object.values(v.goals).reduce((n, s) => n + (s === "done" || s === "fallback" ? 1 : s === "partial" ? 0.5 : 0), 0);
     const handled = Object.values(this.state.hit).filter(x => x === "ok").length;
     const missed = Object.values(this.state.hit).filter(x => x === "miss").length;
