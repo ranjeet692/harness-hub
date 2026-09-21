@@ -6,7 +6,7 @@ import type { Run } from "../../engine/run";
 
 export const pharmacy: Domain = {
   id: "pharmacy",
-  number: "04",
+  number: "05",
   title: "The Pharmacy Harness",
   // ...copy, switches, goals, devices, gauges, report...
 
@@ -35,7 +35,7 @@ export function Contribute() {
     <div className="wrap narrow">
       <article className="prose">
         <p className="eyebrow">Contribute</p>
-        <h1>Add a fourth harness</h1>
+        <h1>Add the next harness</h1>
         <p className="dek" style={{ fontSize: 18 }}>
           Every domain on the hub runs on one shared engine. A new domain is a single TypeScript module. You describe the world, the edge cases and how each harness responds, and you get the console, the concept board, the scorecard and the tests for free.
         </p>
@@ -63,7 +63,7 @@ export function Contribute() {
 
         <h2>Adding live-model mode</h2>
         <p>
-          Give the domain a <code>live</code> spec (see <code>src/domains/barista/live.ts</code>): the tools with their tiers and JSON schemas, a simulator that executes them and injects faults, pre-execution guards, confirmation text, and a <code>verify</code> function the stop hook and scorecard use. The harness in <code>src/live/harness.ts</code> does the rest.
+          Give the domain a <code>live</code> spec (see <code>src/domains/barista/live.ts</code>, or <code>src/domains/coding/live.ts</code> for one where the model's code actually runs): the tools with their tiers and JSON schemas, a simulator that executes them and injects faults, pre-execution guards, confirmation text, and a <code>verify</code> function the stop hook and scorecard use. The harness in <code>src/live/harness.ts</code> does the rest.
         </p>
 
         <h2>Ground rules</h2>

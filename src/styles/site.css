@@ -44,8 +44,8 @@ code, pre{ font-family:var(--font-mono); }
 .section-head h2{ font-size:clamp(24px,3vw,32px); }
 .section-head p{ margin:0; color:var(--ink-soft); max-width:60ch; font-size:15px; }
 
-.domain-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
-@media (max-width:900px){ .domain-grid{ grid-template-columns:1fr; } }
+.domain-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+@media (max-width:760px){ .domain-grid{ grid-template-columns:1fr; } }
 .domain-card{ display:flex; flex-direction:column; gap:12px; background:var(--surface-1); border:1px solid var(--border); border-radius:16px; padding:20px; text-decoration:none; color:var(--ink); transition:border-color .15s, transform .15s; }
 .domain-card:hover{ border-color:var(--brass); color:var(--ink); transform:translateY(-2px); }
 .domain-card .num{ font-family:var(--font-mono); font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--brass); }

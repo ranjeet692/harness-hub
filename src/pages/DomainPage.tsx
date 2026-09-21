@@ -23,7 +23,7 @@ export function DomainPage({ id, concept }: { id: string; concept?: string | nul
       <div className="tabs" role="tablist" aria-label="Run mode">
         <button type="button" role="tab" className="tab" aria-selected={tab === "scripted"} onClick={() => setTab("scripted")}>Scripted run</button>
         <button type="button" role="tab" className="tab" aria-selected={tab === "live"} disabled={!domain.live}
-          title={domain.live ? undefined : "Live model mode is available for the barista first"} onClick={() => setTab("live")}>
+          title={domain.live ? undefined : "Live model mode is available for the barista and the coding agent so far"} onClick={() => setTab("live")}>
           Live model{domain.live ? "" : " (coming soon)"}
         </button>
       </div>
@@ -36,8 +36,8 @@ export function DomainPage({ id, concept }: { id: string; concept?: string | nul
         <p>
           <strong>Scripted run:</strong> the model's choices are fixed so every run is repeatable, and what varies is how the harness responds.
           {domain.live
-            ? <> <strong>Live model:</strong> a real Claude model makes the decisions through the same harness rules, against a simulated world.</>
-            : " Live model mode is built for the barista first and follows for this domain."}
+            ? <> <strong>Live model:</strong> a real Claude model makes the decisions through the same harness rules, against a simulated world{domain.id === "coding" ? " where its code is actually executed against the tests" : ""}.</>
+            : " Live model mode is available for the barista and the coding agent so far, and follows for this domain."}
         </p>
       </footer>
     </div>

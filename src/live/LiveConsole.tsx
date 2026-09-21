@@ -6,7 +6,6 @@ import { TraceCard } from "../components/TraceCard";
 import { MODELS, anthropicClient } from "./anthropic";
 import { LiveRun } from "./harness";
 import type { LiveSpec } from "./types";
-import { mmss } from "../engine/format";
 
 const GOAL_PILL: Record<GoalStatus, [string, string]> = {
   pending: ["Pending", ""], active: ["Working", "info"], done: ["Done", "good"], fallback: ["Via fallback", "warn"],
@@ -55,7 +54,7 @@ export function LiveConsole({ domain, spec }: { domain: Domain; spec: LiveSpec }
     void r.start();
   }
 
-  const clock = spec.clock?.(active.world) ?? 0;
+  const g = spec.gauge?.(active.world);
   const ctxPct = Math.min(100, (st.lastInput / active.opts.compactAt) * 100);
 
   return (
@@ -141,10 +140,12 @@ export function LiveConsole({ domain, spec }: { domain: Domain; spec: LiveSpec }
               <div className="bar"><span className={ctxPct >= 100 ? "warn" : ""} style={{ width: ctxPct + "%" }} /><i style={{ left: "100%" }} title="Compaction threshold" /></div>
               <p className="hint">Compacts (or truncates, if naive) past {active.opts.compactAt.toLocaleString()} input tokens.</p>
             </div>
-            <div className="gauge">
-              <div className="gauge-top"><span>Ticket clock</span><b>{mmss(clock)} / 4:00</b></div>
-              <div className="bar"><span className={clock > 240 ? "danger" : ""} style={{ width: Math.min(100, (clock / 360) * 100) + "%" }} /><i style={{ left: (240 / 360) * 100 + "%" }} /></div>
-            </div>
+            {g && (
+              <div className="gauge">
+                <div className="gauge-top"><span>{g.label}</span><b>{g.text}</b></div>
+                <div className="bar"><span className={g.cls ?? ""} style={{ width: g.pct + "%" }} /><i style={{ left: g.marker + "%" }} /></div>
+              </div>
+            )}
             <dl className="stats">
               <div><dt>Model rounds</dt><dd>{st.rounds}</dd></div>
               <div><dt>Retries</dt><dd>{st.retries}</dd></div>
@@ -158,8 +159,7 @@ export function LiveConsole({ domain, spec }: { domain: Domain; spec: LiveSpec }
             <article className="card">
               <div className="card-head"><span className="actor actor-harness">Harness</span><span className="round-tag">Ready</span></div>
               <p className="verdict info">
-                {mode === "hardened" ? "Hardened" : "Naive"} harness around {MODELS.find(m => m.id === model)?.label}. A real model will make every decision; the coffee bar is simulated.
-                Payments and substitutions will pause here for you to answer as Alex.
+                {mode === "hardened" ? "Hardened" : "Naive"} harness around {MODELS.find(m => m.id === model)?.label}. {spec.readyText}
               </p>
             </article>
           )}

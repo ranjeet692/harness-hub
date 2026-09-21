@@ -57,7 +57,7 @@ export interface LiveSpec<W = any> {
   /** Called when the human declines a confirm-tier call. */
   onDecline?(name: string, input: Record<string, unknown>, world: W): void;
   initWorld(faults: Record<string, boolean>): W;
-  execute(name: string, input: Record<string, unknown>, world: W, ctx: ExecContext): Outcome;
+  execute(name: string, input: Record<string, unknown>, world: W, ctx: ExecContext): Outcome | Promise<Outcome>;
   /** Hardened-only checks before execution (budgets, allergens). Return an error to block. */
   guard?(name: string, input: Record<string, unknown>, world: W): { error: string; concept: ConceptId } | null;
   /** Hardened-only: does this particular call need a human? Defaults to tier === "confirm". */
@@ -69,7 +69,12 @@ export interface LiveSpec<W = any> {
   devices(world: W): Record<string, [string, Tone]>;
   /** Maps the world onto the scripted scene's state shape, so the same Scene component renders it. */
   sceneState?(world: W): Partial<RunState>;
-  clock?(world: W): number;
+  /** The domain's own gauge (a ticket clock, a diff budget). */
+  gauge?(world: W): { label: string; text: string; pct: number; marker: number; cls?: "" | "warn" | "danger" };
+  /** Copy for the console and the harness's context cards. */
+  readyText: string;
+  pinnedNote: string;
+  truncatedNote: string;
 }
 
 /* ---- Messages API shapes (the subset we use) ---- */

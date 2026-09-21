@@ -9,11 +9,13 @@ harness-hub rebuilds everyday systems as AI agent harnesses, so you can watch th
 | **Barista** | One latte order: a flaky card terminal, a jammed grinder, a nut allergy, an order note that tries to empty the till | 5/5 goals, 0 incidents vs 0/5 goals, 4 incidents |
 | **Robovac** | One cleaning mission: a shrinking battery, a silent lidar, the dog's accident, a routine that points at the nursery | 5/5 goals, 0 incidents vs 1/5 goals, 4 incidents |
 | **Home Butler** | One evening of guests: money, a door lock, an offline thermostat, a hijack attempt in the inbox | 5/5 goals, 0 incidents vs 2/5 goals, 3 incidents |
+| **Coding agent** | One GitHub issue: an edit that matches three places, a suite that hangs on Postgres, a CI polling loop, a dead-end dependency, a code comment telling AI agents to curl a script and paste `.env` | 5/5 goals, 0 incidents vs 0.5/5 goals, 2 incidents, 3,806-line diff, 2 duplicate PRs |
 
 ## What's inside
 
-- **Scripted runs** for all three domains. The model's choices are fixed, so every run is repeatable, and what varies is how the harness responds. Nine edge-case switches per domain, a board of 20 concepts that light up as they're exercised, live world state, gauges, and a hardened-vs-naive comparison table.
-- **Live model mode** (barista first). A real Claude model makes every decision through a real harness running in your browser. It enforces tool tiers, schema validation, unknown-tool errors, a loop guard, budget and allergen guards, confirmation gates, retries with backoff, idempotency keys, untrusted-data wrapping, compaction, mid-run steering and a stop hook, all in code, against a simulated coffee bar with injectable faults. Bring your own Anthropic API key. It's sent only to `api.anthropic.com`, straight from your browser.
+- **Scripted runs** for all four domains. The model's choices are fixed, so every run is repeatable, and what varies is how the harness responds. Nine edge-case switches per domain, a board of 20 concepts that light up as they're exercised, live world state, gauges, and a hardened-vs-naive comparison table.
+- **Live model mode** for the barista and the coding agent. A real Claude model makes every decision through a real harness running in your browser. It enforces tool tiers, schema validation, unknown-tool errors, a loop guard, budget and allergen guards, confirmation gates, retries with backoff, idempotency keys, untrusted-data wrapping, compaction, mid-run steering and a stop hook, all in code. Bring your own Anthropic API key. It's sent only to `api.anthropic.com`, straight from your browser.
+  - **Coding agent, live:** the model works on a small JavaScript checkout repo (`pricing.js`, `cart.js`, tests, `AGENTS.md`, a generated file and a fake `.env`). `edit_file` is exact string replacement that must match once, like the edit tools in real coding agents. The model's code **really runs**: the unit tests execute in a sandboxed Web Worker with a 2-second limit, so "tests pass" means the model's actual fix passes. This is the easiest way to check the harness claims against your own experience with coding agents.
 - **Concept guides** for all 20 concepts: why each one matters, what breaks without it, how to build it, a code sketch, and links into each domain's trace.
 
 ### The 20 concepts
@@ -44,6 +46,7 @@ Node 20 or newer.
 src/
   engine/        run loop, trace-card model, compaction, decisions, scoring, the 20 concepts (no UI code)
   domains/       one folder per domain: copy, switches, goals, world, beats, scene
+    coding/      live.ts (mini repo + simulator) and runner.ts (sandboxed test runner)
     _template/   start here to add a domain
   live/          the real-model harness, Anthropic client, schema validator, live console
   components/    console, trace cards, concept board, comparison table

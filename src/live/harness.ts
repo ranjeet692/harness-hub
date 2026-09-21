@@ -34,7 +34,7 @@ export interface LiveState {
   memoryLost: boolean;
 }
 
-const INJECTION = /ignore (all |any )?previous instructions|\[system\]|disregard (your|the) (rules|instructions)/i;
+const INJECTION = /ignore (all |any )?previous instructions|\[system\]|disregard (your|the) (rules|instructions)|note for ai agents|ai agents?:/i;
 const stable = (v: unknown) => JSON.stringify(v, Object.keys((v ?? {}) as object).sort());
 
 /**
@@ -112,8 +112,8 @@ export class LiveRun<W = any> {
     let trimmed = 0;
     this.messages.forEach((m, i) => {
       if (i === 0 && Array.isArray(m.content) && !this.shiftCompacted) {
-        // First message: keep the order, summarize the long shift log.
-        m.content = m.content.map(b => (b.type === "text" && b.text.startsWith("Shift log") ? (trimmed++, { type: "text", text: "Shift log: [compacted: 38 earlier orders, none still open]" }) : b));
+        // First message: keep the task itself, summarize the long log that came with it.
+        m.content = m.content.map((b, j) => (j > 0 && b.type === "text" ? (trimmed++, { type: "text", text: "[compacted: " + b.text.split("\n")[0].slice(0, 80) + " … summarized, nothing actionable]" }) : b));
         this.shiftCompacted = true;
       }
       if (i === 0 || i >= this.messages.length - keep || !Array.isArray(m.content)) return;
@@ -122,7 +122,7 @@ export class LiveRun<W = any> {
         return b;
       });
     });
-    const c = this.card("harness", "Context compaction", `The last request used ${before.toLocaleString()} input tokens, past the ${this.opts.compactAt.toLocaleString()} threshold. ${trimmed} older blocks were summarized. The system prompt (rules and Alex's allergy) is pinned and never touched.`, "info", ["compact", "mem"]);
+    const c = this.card("harness", "Context compaction", `The last request used ${before.toLocaleString()} input tokens, past the ${this.opts.compactAt.toLocaleString()} threshold. ${trimmed} older blocks were summarized. ${this.spec.pinnedNote}`, "info", ["compact", "mem"]);
     this.add(c, { kind: "detail", text: `pinned: system prompt, the order, the last ${keep} messages` });
     this.hit("compact"); this.hit("mem");
   }
@@ -136,7 +136,7 @@ export class LiveRun<W = any> {
     }
     if (this.messages.length && this.messages[0].role !== "user") this.messages.unshift({ role: "user", content: "Continue." });
     this.state.memoryLost = true;
-    this.card("harness", "Context overflow", `The request passed ${this.opts.compactAt.toLocaleString()} input tokens, so the naive harness silently dropped the ${dropped.length} oldest messages. They held the order and Alex's profile, including the nut allergy.`, "danger", ["compact", "mem"]);
+    this.card("harness", "Context overflow", `The request passed ${this.opts.compactAt.toLocaleString()} input tokens, so the naive harness silently dropped the ${dropped.length} oldest messages. ${this.spec.truncatedNote}`, "danger", ["compact", "mem"]);
     this.hit("compact", "miss"); this.hit("mem", "miss");
   }
 
@@ -213,7 +213,7 @@ export class LiveRun<W = any> {
     }
 
     const key = this.H && tool.idempotent ? `${use.name}-${Math.abs(hash(sig)).toString(36)}` : undefined;
-    let out: Outcome = this.spec.execute(use.name, input, this.world, { mode: this.opts.mode, idempotencyKey: key });
+    let out: Outcome = await this.spec.execute(use.name, input, this.world, { mode: this.opts.mode, idempotencyKey: key });
     let retryCard: Card | null = null;
     for (let attempt = 1; !out.ok && this.H && attempt <= 3; attempt++) {
       if (out.transient) {
@@ -229,7 +229,7 @@ export class LiveRun<W = any> {
       this.state.retries++;
       this.emit();
       await this.wait(this.H ? 1000 * 2 ** (attempt - 1) : 0);
-      out = this.spec.execute(use.name, input, this.world, { mode: this.opts.mode, idempotencyKey: key });
+      out = await this.spec.execute(use.name, input, this.world, { mode: this.opts.mode, idempotencyKey: key });
       if (out.ok && retryCard) this.add(retryCard, { kind: "detail", text: "succeeded: " + JSON.stringify(out.result) });
     }
     if (out.ok && tool.idempotent && this.H && !this.state.hit.idem) this.hit("idem");
@@ -278,12 +278,15 @@ export class LiveRun<W = any> {
     const tools = spec.tools.filter(t => (H ? t.tier !== "never" : true));
     const system = spec.systemPrompt(this.opts.mode);
     const first = spec.userMessage(this.opts.mode, this.opts.faults);
-    const [order, ...rest] = first.split("\n\nShift log");
-    this.messages = [{ role: "user", content: [{ type: "text", text: order }, ...(rest.length ? [{ type: "text" as const, text: "Shift log" + rest.join("\n\nShift log") }] : [])] }];
+    // Long context that rides along with the task (a shift log, a CI log) goes in its own block so compaction can summarize it.
+    const cut = first.search(/\n\n(Shift log|CI log)/);
+    const task = cut >= 0 ? first.slice(0, cut) : first;
+    const tail = cut >= 0 ? first.slice(cut + 2) : "";
+    this.messages = [{ role: "user", content: [{ type: "text", text: task }, ...(tail ? [{ type: "text" as const, text: tail }] : [])] }];
 
     const ctx = this.card("harness", "Context assembled", H
-      ? "System prompt holds the rules and Alex's allergy (pinned). Tools are filtered by tier: dangerous ones aren't sent at all."
-      : "A one-line system prompt. The customer profile sits in the first user message, and every tool is exposed.", H ? "info" : "warn", ["ctx", "mem", "tiers"]);
+      ? "The system prompt holds the rules and the memory that must never be lost (pinned). Tools are filtered by tier: dangerous ones aren't sent at all."
+      : "A one-line system prompt. The memory sits in the first user message, where truncation can drop it, and every tool is exposed.", H ? "info" : "warn", ["ctx", "mem", "tiers"]);
     ctx.variant = "context";
     this.add(ctx, { kind: "detail", text: `tools sent: ${tools.map(t => t.name).join(", ")}` });
     this.hit("ctx");

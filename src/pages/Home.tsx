@@ -48,7 +48,7 @@ export function Home() {
 
       <section aria-labelledby="domains-h">
         <div className="section-head">
-          <h2 id="domains-h">Three harnesses, every edge case</h2>
+          <h2 id="domains-h">Four harnesses, every edge case</h2>
           <p>Each one runs the same scenario through a hardened harness and a naive one. The numbers below come from running them just now, with every edge case switched on.</p>
         </div>
         <div className="domain-grid">
@@ -93,7 +93,7 @@ export function Home() {
 
       <section className="callout">
         <div>
-          <h2>Add a fourth harness</h2>
+          <h2>Add the next harness</h2>
           <p>A domain is one TypeScript file: its tools, goals, edge cases and beats. The engine, the concept board, the scorecard and the tests come for free.</p>
         </div>
         <a className="btn-link primary" href={href("/contribute")}>How to contribute →</a>

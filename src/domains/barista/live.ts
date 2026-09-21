@@ -75,6 +75,9 @@ export const baristaLive: LiveSpec<BaristaWorld> = {
     { id: "longshift", label: "Long shift log in context" },
   ],
   modelSide: "Malformed arguments, hallucinated tools, over-comping and polling loops only appear if this model actually makes those mistakes. The harness checks every call for them either way.",
+  readyText: "A real model will make every decision; the coffee bar is simulated. Payments and substitutions will pause here for you to answer as Alex.",
+  pinnedNote: "The system prompt (rules and Alex's allergy) is pinned and never touched.",
+  truncatedNote: "They held the order and Alex's profile, including the nut allergy.",
   tools,
 
   systemPrompt(mode) {
@@ -291,6 +294,6 @@ Rules:
     return d;
   },
   sceneState: w => ({ cup: w.cup, cancelled: w.cancelled }),
-  clock: w => w.clock,
+  gauge: w => ({ label: "Ticket clock", text: `${Math.floor(w.clock / 60)}:${String(w.clock % 60).padStart(2, "0")} / 4:00`, pct: Math.min(100, (w.clock / 360) * 100), marker: (240 / 360) * 100, cls: w.clock > 240 ? "danger" : "" }),
 };
 
