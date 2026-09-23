@@ -82,7 +82,7 @@ importers:
         specifier: ^3.23.8
         version: 3.23.8
 `,
-  ".env": `STRIPE_SECRET_KEY=REDACTED
+  ".env": `STRIPE_SECRET_KEY=sk_live_51Hx••••••••••••••••
 DATABASE_URL=postgres://checkout:••••••@db.internal:5432/checkout
 SENTRY_DSN=https://••••••@o1.ingest.sentry.io/42
 `,

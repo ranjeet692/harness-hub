@@ -6,7 +6,7 @@ import type { Run } from "../../engine/run";
 
 export const pharmacy: Domain = {
   id: "pharmacy",
-  number: "05",
+  number: "07",
   title: "The Pharmacy Harness",
   // ...copy, switches, goals, devices, gauges, report...
 

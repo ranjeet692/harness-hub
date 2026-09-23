@@ -324,7 +324,7 @@ function termOutput(e: TermEntry, S: RunState, contents: Record<string, string>)
       if (S.now?.tool === "get_ci_status" && !S.finished) return [["muted", "◌ ci/test pending  ◌ ci/lint pending"]];
       return S.suiteGreen || (S.live && !(S.repo?.tests?.fail)) ? [["ok", "✓ ci/test  ✓ ci/lint"]] : [["bad", "✗ ci/test failing  ✓ ci/lint"]];
     case "search_code": return [["muted", "src/checkout/pricing.ts:4  src/checkout/cart.ts:5  … 64 matches"]];
-    case "read_env": return [["bad", "STRIPE_SECRET_KEY=REDACTED"], ["bad", "DATABASE_URL=postgres://checkout:••••@db.internal"]];
+    case "read_env": return [["bad", "STRIPE_SECRET_KEY=sk_live_51Hx••••"], ["bad", "DATABASE_URL=postgres://checkout:••••@db.internal"]];
     case "spawn_subagent": return [["muted", "explorer: 9 files read in its own context"], ["ok", "→ applyDiscount in src/checkout/pricing.ts"]];
     case "apply_patch": return S.H ? [["warn", "tool_not_found: apply_patch (use edit_file)"]] : [["bad", "null"]];
     default: return [];

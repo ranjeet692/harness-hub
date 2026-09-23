@@ -27,8 +27,8 @@ export function Section({ n, title, lead, children, id, aside }: { n: number; ti
   return (
     <section className="step-section" id={id} aria-labelledby={`sec-${n}`}>
       <header className="step-head">
-        <span className="step-n" aria-hidden="true">{n}</span>
         <div>
+          <span className="step-n">Step {String(n).padStart(2, "0")}</span>
           <h2 id={`sec-${n}`}>{title}</h2>
           <p>{lead}</p>
         </div>

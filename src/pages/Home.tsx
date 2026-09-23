@@ -39,9 +39,9 @@ export function Home() {
     <div className="home">
       <section className="hero">
         <p className="eyebrow">An open-source playground for people who build AI agents</p>
-        <h1>The model is the engine.<br /><span>The harness is the car.</span></h1>
+        <h1>The model is the engine.<br /><span>The <em>harness</em> is the car.</span></h1>
         <p className="lede">
-          Four everyday agents, each run twice: once inside a hardened harness, once inside a naive one.
+          Six everyday agents, each run twice: once inside a hardened harness, once inside a naive one.
           Watch every check, every retry, and every moment the agent stops to ask you.
         </p>
         <div className="hero-cta">
@@ -76,7 +76,7 @@ export function Home() {
 
       <section className="section" aria-labelledby="h-harnesses">
         <div className="section-head">
-          <h2 id="h-harnesses">Four harnesses. Every edge case.</h2>
+          <h2 id="h-harnesses">Six harnesses. <em>Every</em> edge case.</h2>
           <p>The same scenario through both harnesses, with every edge case switched on. The numbers are computed in your browser when this page loads.</p>
         </div>
         <div className="harness-grid">
@@ -104,7 +104,7 @@ export function Home() {
 
       <section className="section" aria-labelledby="h-how">
         <div className="section-head">
-          <h2 id="h-how">How it works</h2>
+          <h2 id="h-how">How it <em>works</em></h2>
           <p>Every harness page follows the same four steps.</p>
         </div>
         <ol className="how">
@@ -117,7 +117,7 @@ export function Home() {
 
       <section className="section" aria-labelledby="h-concepts">
         <div className="section-head">
-          <h2 id="h-concepts">Twenty concepts, five groups</h2>
+          <h2 id="h-concepts">Twenty concepts, <em>five</em> groups</h2>
           <p>Every step in a run is tagged with the concepts it exercises. Each guide covers the idea, the failure it prevents and how to build it.</p>
         </div>
         <div className="group-grid">
@@ -134,7 +134,7 @@ export function Home() {
       </section>
 
       <section className="cta-band">
-        <h2>Add the next harness.</h2>
+        <h2>Add the <em>next</em> harness.</h2>
         <p>A harness is one TypeScript module: its tools, goals, edge cases and steps. The engine, timeline, scorecard and tests come with it.</p>
         <div className="hero-cta">
           <a className="btn btn-primary btn-lg" href={href("/contribute")}>How to contribute</a>
