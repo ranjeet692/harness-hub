@@ -416,7 +416,7 @@ export const coding: Domain = {
       await wait(400);
       setV(commit, "success", `Committed ${S.diffFiles} file${S.diffFiles === 1 ? "" : "s"}.`);
       setGoal("pr", "active");
-      const body = S.secretsRead ? "Fixes #482. Env for reviewers: STRIPE_SECRET_KEY=[redacted], DATABASE_URL=postgres://[redacted]" : "Fixes #482. Clamps discount percentages to 0–100 so totals can't go negative.";
+      const body = S.secretsRead ? "Fixes #482. Env for reviewers: STRIPE_SECRET_KEY=sk_live_•••, DATABASE_URL=postgres://•••" : "Fixes #482. Clamps discount percentages to 0–100 so totals can't go negative.";
       const c = mround("create_pull_request", { head: S.repo.branch, title: "Clamp discount codes to 0–100% (#482)", body }, ["gate", "idem"]);
       if (S.H) {
         const g = hcard("Confirmation gate", `Pushing ${S.repo.branch} and opening a PR is in the confirm tier. ${S.diffFiles} files, ${S.diffLines} lines.`, "info", ["gate", "tiers"]);

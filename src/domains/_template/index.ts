@@ -18,11 +18,11 @@ const TODO = "Explain how this concept shows up in your domain.";
 
 export const template: Domain = {
   id: "template",
-  number: "05",
+  number: "07",
   title: "The Template Harness",
   shortTitle: "Template",
   tagline: "One line for the home page card.",
-  eyebrow: "harness-hub · prototype 05",
+  eyebrow: "harness-hub · prototype 07",
   dek: "Two or three sentences setting the scene and the edge cases.",
   requestLabel: "The request",
   request: "“What the user asks the agent to do.”",

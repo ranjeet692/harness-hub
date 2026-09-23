@@ -1,0 +1,79 @@
+/* harness-hub · the onboarding agent's system map: HR in the middle, every copy around it. */
+
+.ob{border-radius:12px; overflow:hidden; background:var(--surface); box-shadow:0 0 0 1px var(--line), var(--shadow-1); display:flex; flex-direction:column;}
+.ob-top{display:flex; align-items:center; gap:12px; height:48px; padding:0 14px; border-bottom:1px solid var(--line);}
+.ob-logo{width:26px; height:26px; border-radius:7px; background:var(--ink); display:grid; place-items:center;}
+.ob-logo circle, .ob-logo path{fill:none; stroke:var(--on-ink); stroke-width:2; stroke-linecap:round;}
+.ob-file{display:flex; flex-direction:column; line-height:1.15; min-width:0;}
+.ob-file b{font-size:14px; font-weight:600;}
+.ob-file span{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ob-pill{margin-left:auto; font-family:var(--mono); font-size:11.5px; padding:4px 9px; border-radius:6px; background:var(--bg-alt); color:var(--text-3); white-space:nowrap;}
+.ob-pill.good{color:var(--good); background:var(--good-soft);}
+.ob-pill.bad{color:var(--bad); background:var(--bad-soft);}
+
+.ob-map{position:relative; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:34px 44px; padding:28px; background:var(--bg);
+  background-image:radial-gradient(var(--line) 1px, transparent 1px); background-size:18px 18px;}
+.ob-wires{position:absolute; inset:28px; width:calc(100% - 56px); height:calc(100% - 56px); pointer-events:none;}
+.ob-wires line{stroke:var(--line); stroke-width:1.5; stroke-dasharray:4 5;}
+.ob-wires line.live{stroke:var(--accent-bright); stroke-width:2; stroke-dasharray:none; animation:ob-flow 1s linear infinite;}
+@keyframes ob-flow{from{stroke-dashoffset:0;} to{stroke-dashoffset:-18;}}
+
+/* system cards */
+.ob-card{position:relative; background:var(--surface); border-radius:10px; box-shadow:0 0 0 1px var(--line); padding:10px 12px 11px; transition:box-shadow .25s, transform .25s; min-width:0;}
+.ob-card header{display:flex; align-items:baseline; gap:8px; margin-bottom:7px;}
+.ob-card header b{font-size:13px; font-weight:600;}
+.ob-card header span{font-family:var(--mono); font-size:10.5px; color:var(--text-3);}
+.ob-live{margin-left:auto; font-style:normal; font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); animation:ob-blink 1s ease-in-out infinite;}
+@keyframes ob-blink{50%{opacity:.35;}}
+.ob-card.is-active{box-shadow:0 0 0 2px var(--accent-bright), var(--shadow-1); transform:translateY(-1px);}
+.ob-card.st-bad{box-shadow:0 0 0 1.5px var(--bad);}
+.ob-card.st-bad.is-active{box-shadow:0 0 0 2px var(--bad), var(--shadow-1);}
+.ob-card.st-bad::before{content:""; position:absolute; left:0; top:10px; bottom:10px; width:3px; border-radius:0 3px 3px 0; background:var(--bad);}
+.ob-card.is-empty{background:transparent; box-shadow:0 0 0 1px var(--line); border:0; outline:1px dashed var(--line); outline-offset:-1px;}
+.ob-card.is-empty.is-active{box-shadow:0 0 0 2px var(--accent-bright);}
+.ob-empty{margin:0; font-size:12.5px; color:var(--text-3);}
+.ob-card ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:5px;}
+.ob-card li{display:grid; grid-template-columns:78px minmax(0,1fr) 16px; gap:8px; align-items:start; font-size:12.5px; line-height:1.35;}
+.ob-k{font-family:var(--mono); font-size:10.5px; letter-spacing:.03em; color:var(--text-3); padding-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ob-v{min-width:0; overflow-wrap:anywhere; color:var(--text);}
+.ob-v small{display:block; font-size:11px; color:var(--text-3);}
+.ob-card li i{width:16px; height:16px; border-radius:4px; display:grid; place-items:center; font-style:normal; font-size:10px; font-weight:700; color:var(--text-3); margin-top:1px;}
+.ob-card li.st-ok i{background:var(--good); color:#fff;}
+.ob-card li.st-bad i{background:var(--bad); color:#fff;}
+.ob-card li.st-warn i{background:var(--warn); color:#fff;}
+.ob-card li.st-bad .ob-v{color:var(--bad);}
+.ob-card li.st-warn small{color:var(--warn);}
+.ob-card li.st-none .ob-v{color:var(--text-3);}
+
+/* the ticket reads as paper; day one reads as a checklist */
+.ob-card.is-ticket{background:var(--surface); box-shadow:0 0 0 1px var(--line);}
+.ob-card.is-ticket::after{content:""; position:absolute; right:10px; top:-6px; width:34px; height:12px; background:var(--warn-soft); opacity:.9; transform:rotate(4deg);}
+.ob-card.is-ticket.st-warn .ob-v{text-decoration:none;}
+.ob-card.is-ready{box-shadow:0 0 0 1px var(--line);}
+
+/* the hub */
+.ob-hub{position:relative; align-self:center; background:var(--ink); color:var(--on-ink); border-radius:12px; padding:14px 16px 12px; box-shadow:var(--shadow-1); transition:box-shadow .25s;}
+.ob-hub.is-active{box-shadow:0 0 0 3px var(--accent-bright), var(--shadow-1);}
+.ob-hub header{display:flex; flex-direction:column; gap:2px; margin-bottom:10px;}
+.ob-hub header b{font-family:var(--serif); font-size:22px; font-weight:400; line-height:1;}
+.ob-hub header span{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-bright);}
+.ob-hub dl{margin:0; display:flex; flex-direction:column; gap:5px;}
+.ob-hub dl div{display:grid; grid-template-columns:82px minmax(0,1fr); gap:8px; font-size:12.5px;}
+.ob-hub dt{font-family:var(--mono); font-size:10.5px; opacity:.6; padding-top:2px;}
+.ob-hub dd{margin:0; font-weight:500;}
+.ob-hub p{margin:10px 0 0; padding-top:8px; border-top:1px solid rgba(255,255,255,.14); font-size:11.5px; opacity:.7;}
+
+.ob-prompt{display:flex; align-items:center; gap:10px; padding:10px 14px; border-top:1px solid var(--line);}
+.ob-prompt-text{flex:1; min-width:0; font-size:13.5px; color:var(--text-2); background:var(--bg); border:1px solid var(--line); border-radius:9px; padding:8px 12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+@media (max-width:980px){
+  .ob-map{grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; padding:16px;}
+  .ob-wires{display:none;}
+  .ob-hub{grid-column:1 / -1; order:-2;}
+  .ob-card.is-ticket{order:-1;}
+  .ob-card.is-ready{order:-1;}
+}
+@media (max-width:620px){
+  .ob-map{grid-template-columns:minmax(0,1fr);}
+  .ob-card.is-ticket{transform:none;}
+}

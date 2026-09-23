@@ -8,7 +8,7 @@ export function ConceptsIndex() {
     <div className="page">
       <header className="page-hero center">
         <p className="eyebrow">The guide</p>
-        <h1>Twenty concepts of harness engineering.</h1>
+        <h1>Twenty concepts of <em>harness</em> engineering.</h1>
         <p className="lede">Grouped the way they show up in a run: what the model sees, what it can do, how the loop is kept in check, what keeps it safe, and how you know it worked.</p>
       </header>
       <div className="concept-index">

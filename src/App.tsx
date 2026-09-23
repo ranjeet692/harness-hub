@@ -49,7 +49,7 @@ export function App() {
         <div className="nav-inner">
           <a className="brand" href={href("/")}>
             <span className="brand-mark" aria-hidden="true">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v5h-5" /></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3.5h5.5A5.5 5.5 0 0 1 20 9v6a5.5 5.5 0 0 1-5.5 5.5H9.5A5.5 5.5 0 0 1 4 15V8.5a5 5 0 0 1 5-5z" /><path d="M4 12.5 11 8" /></svg>
             </span>
             harness-hub
           </a>

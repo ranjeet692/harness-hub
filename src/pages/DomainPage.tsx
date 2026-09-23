@@ -16,7 +16,7 @@ export function DomainPage({ id, concept }: { id: string; concept?: string | nul
     <div className="page domain-page">
       <header className="page-hero">
         <p className="crumbs"><a href={href("/")}>Harnesses</a><span aria-hidden="true">/</span>{domain.shortTitle}</p>
-        <h1>{domain.title.replace(/^The /, "")}</h1>
+        <h1>{domain.title.replace(/^The /, "").replace(/ Harness$/, "")} <em>harness</em></h1>
         <p className="lede">{domain.tagline}</p>
         <div className="task">
           <span className="task-label">{domain.requestLabel}</span>
