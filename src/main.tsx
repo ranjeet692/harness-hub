@@ -10,6 +10,7 @@ import "./styles/console.css";
 import "./styles/editor.css";
 import "./styles/canvas.css";
 import "./styles/onboarding.css";
+import "./styles/loop.css";
 import "./styles/identity.css";
 
 createRoot(document.getElementById("root")!).render(
