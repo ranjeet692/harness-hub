@@ -5,6 +5,7 @@ import { Run, allSwitches, runInstant } from "../engine/run";
 import type { Domain, Mode, RunResult, RunState } from "../engine/types";
 import { href } from "../router";
 import { TraceCard } from "./TraceCard";
+import { LoopViz } from "./LoopViz";
 import { ActorLegend, DecisionSheet, GOAL_PILL, RunBar, Section, SidePanel, describeLatest, toneOf, type RunStatus } from "./RunUI";
 
 type Results = Partial<Record<Mode, RunResult>>;
@@ -134,6 +135,8 @@ export function Console({ domain, focusConcept }: { domain: Domain; focusConcept
       />
 
       <Section n={2} title="Watch the run" lead="Each step appears as it happens. Model steps are the agent deciding. Harness steps are the code around it checking, blocking or retrying. When a step needs you, the run pauses and asks you at the bottom of the screen.">
+        <LoopViz cards={ready ? [] : run.cards} hit={ready ? {} : S.hit} rounds={ready ? 0 : S.rounds} tokens={ready ? 0 : S.tokens} window={domain.window}
+          status={status} userLabel={domain.userLabel} approvals={ready ? 0 : S.approvals} />
         {wide && domain.Scene && <div className="world-wide"><domain.Scene S={S} /></div>}
         <div className="watch">
           <div className="timeline-wrap">

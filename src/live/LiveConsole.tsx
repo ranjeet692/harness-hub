@@ -4,6 +4,7 @@ import type { Domain, Mode, RunState } from "../engine/types";
 import { ConceptBoard, Meter } from "../components/Console";
 import { TraceCard } from "../components/TraceCard";
 import { ActorLegend, DecisionSheet, GOAL_PILL, RunBar, Section, SidePanel, describeLatest, toneOf, type RunStatus } from "../components/RunUI";
+import { LoopViz } from "../components/LoopViz";
 import { MODELS, anthropicClient } from "./anthropic";
 import { LiveRun } from "./harness";
 import type { LiveSpec } from "./types";
@@ -132,6 +133,8 @@ export function LiveConsole({ domain, spec }: { domain: Domain; spec: LiveSpec }
       {st.status === "error" && <p className="errbox" role="alert">{st.error}</p>}
 
       <Section n={2} title="Watch the run" lead="Every model call and every harness check, as it happens. When the model wants to do something risky, the run pauses and asks you at the bottom of the screen.">
+        <LoopViz cards={active.cards} hit={st.hit} rounds={st.rounds} tokens={st.lastInput} window={active.opts.compactAt}
+          status={status} userLabel={domain.userLabel} modelLabel="Claude" approvals={st.approvals} />
         {wide && domain.Scene && <div className="world-wide"><domain.Scene S={sceneS} /></div>}
         <div className="watch">
           <div className="timeline-wrap">

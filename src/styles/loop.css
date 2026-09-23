@@ -1,0 +1,95 @@
+/* harness-hub · the loop view: a dark instrument panel in both themes, graphite and signal orange. */
+
+.loopviz{
+  --lp-bg:#141311; --lp-panel:#1c1a17; --lp-line:#34302a; --lp-text:#f3efe7; --lp-dim:#9a9286; --lp-faint:#5f584e;
+  --lp-accent:#ff6a1a; --lp-good:#5fd08a; --lp-warn:#f2b441; --lp-bad:#ff5a4f; --lp-you:#b79cff;
+  position:relative; margin-bottom:20px; border-radius:14px; overflow:hidden; color:var(--lp-text);
+  background:radial-gradient(120% 90% at 50% 45%, #1d1b18 0%, var(--lp-bg) 70%); box-shadow:0 0 0 1px #2a2723, var(--shadow-1);
+}
+.lp-head{display:flex; align-items:flex-end; justify-content:space-between; gap:18px; padding:16px 20px 0; flex-wrap:wrap;}
+.lp-title{display:flex; flex-direction:column; gap:3px;}
+.lp-title b{font-family:var(--serif); font-weight:400; font-size:26px; line-height:1; letter-spacing:-.01em;}
+.lp-title b::after{content:""; display:inline-block; width:8px; height:8px; margin-left:8px; border-radius:50%; background:var(--lp-faint); vertical-align:middle;}
+.loopviz.is-running .lp-title b::after{background:var(--lp-accent); box-shadow:0 0 0 0 rgba(255,106,26,.6); animation:lp-ping 1.4s infinite;}
+.loopviz.is-waiting .lp-title b::after{background:var(--lp-you); animation:lp-ping 1.4s infinite;}
+@keyframes lp-ping{70%{box-shadow:0 0 0 8px rgba(255,106,26,0);} 100%{box-shadow:0 0 0 0 rgba(255,106,26,0);}}
+.lp-title span{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--lp-dim);}
+.lp-counters{display:flex; gap:22px; margin:0;}
+.lp-counters div{display:flex; flex-direction:column; align-items:flex-end;}
+.lp-counters dt{font-family:var(--mono); font-size:9.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--lp-dim);}
+.lp-counters dd{margin:0; font-family:var(--mono); font-size:20px; font-variant-numeric:tabular-nums; line-height:1.2;}
+.lp-counters dd.good{color:var(--lp-good);} .lp-counters dd.bad{color:var(--lp-bad);}
+
+.lp-svg{display:block; width:100%; height:auto; max-height:420px; margin:0 auto;}
+.lp-strands path{fill:none; stroke:#cfc6b8; stroke-width:1;}
+.lp-p{fill:#e9e1d4; opacity:.55;}
+.lp-p.hot{fill:var(--lp-accent); opacity:.9;}
+.loopviz.is-example .lp-p, .loopviz.is-finished .lp-p, .loopviz.is-ready .lp-p{opacity:.3;}
+.lp-trail{color:var(--lp-accent);}
+.lp-trail circle{fill:currentColor;}
+.lp-trail.bad{color:var(--lp-bad);} .lp-trail.warn{color:var(--lp-warn);} .lp-trail.good{color:var(--lp-good);}
+.loopviz.is-waiting .lp-trail{color:var(--lp-you);}
+.lp-trail .lp-t:first-child{filter:drop-shadow(0 0 6px currentColor);}
+
+.lp-spoke{stroke:var(--lp-faint); stroke-width:1.2; stroke-dasharray:3 5;}
+.lp-spoke.on{stroke:var(--lp-accent); stroke-width:1.6; animation:lp-dash .8s linear infinite;}
+.lp-spoke.ask.on{stroke:var(--lp-you);}
+@keyframes lp-dash{to{stroke-dashoffset:-16;}}
+
+/* stations */
+.lp-st rect{fill:var(--lp-panel); stroke:var(--lp-line); stroke-width:1.2; transition:stroke .3s, fill .3s;}
+.lp-st.k-diamond rect{fill:#161412;}
+.lp-st.has-ok rect{stroke:#3b5b45;}
+.lp-st.has-miss rect{stroke:#7a3431;}
+.lp-st.on rect{stroke:var(--lp-accent); stroke-width:1.8;}
+.lp-st.on.good rect{stroke:var(--lp-good);} .lp-st.on.warn rect{stroke:var(--lp-warn);} .lp-st.on.bad rect{stroke:var(--lp-bad); fill:#2a1715;}
+.lp-halo{fill:url(#lp-glow); color:var(--lp-accent); pointer-events:none;}
+.lp-st.on.good .lp-halo{color:var(--lp-good);} .lp-st.on.warn .lp-halo{color:var(--lp-warn);} .lp-st.on.bad .lp-halo{color:var(--lp-bad);}
+.lp-burst{fill:none; stroke:var(--lp-bad); stroke-width:2; animation:lp-burst .9s ease-out forwards;}
+@keyframes lp-burst{from{r:18; opacity:1;} to{r:52; opacity:0;}}
+.lp-st-title{font-family:var(--font); font-size:14px; font-weight:600; fill:var(--lp-text);}
+.lp-st-sub{font-family:var(--mono); font-size:10px; fill:var(--lp-dim);}
+.lp-st.has-miss .lp-st-sub{fill:#ff8a80;}
+.lp-dia{font-family:var(--mono); font-size:9.5px; font-weight:600; fill:var(--lp-dim);}
+.lp-st.has-ok .lp-dia{fill:var(--lp-good);} .lp-st.has-miss .lp-dia{fill:var(--lp-bad);}
+.lp-q{font-family:var(--font); font-size:13px; font-weight:500; fill:var(--lp-dim);}
+.lp-st.on .lp-q{fill:var(--lp-text);}
+
+.lp-win rect:first-child{fill:transparent; stroke:var(--lp-line); stroke-dasharray:3 4;}
+.lp-win-bar{fill:var(--lp-line);}
+.lp-win-fill{fill:var(--lp-dim);} .lp-win-fill.warn{fill:var(--lp-warn);} .lp-win-fill.bad{fill:var(--lp-bad);}
+.lp-win .lp-st-title{font-family:var(--mono); font-size:15px;}
+
+.lp-chip rect{fill:#0f0e0c; stroke:var(--lp-accent); stroke-width:1.6;}
+.lp-chip line{stroke:var(--lp-accent); stroke-width:1.6; opacity:.7;}
+.lp-chip.on rect{fill:#26170e; filter:drop-shadow(0 0 10px rgba(255,106,26,.55));}
+.lp-chip-name{font-family:var(--serif); font-size:19px; fill:var(--lp-text);}
+.lp-chip-sub{font-family:var(--mono); font-size:9.5px; fill:var(--lp-dim);}
+
+.lp-you rect{fill:transparent; stroke:var(--lp-line); stroke-width:1.2;}
+.lp-you .lp-st-title{fill:var(--lp-dim);}
+.lp-you.on rect{fill:#221c33; stroke:var(--lp-you); stroke-width:1.8; animation:lp-breathe 1.6s ease-in-out infinite;}
+.lp-you.on .lp-st-title{fill:var(--lp-text);}
+.lp-you.on .lp-st-sub{fill:var(--lp-you);}
+@keyframes lp-breathe{50%{stroke-opacity:.35;}}
+
+/* the last three steps, as a ticker */
+.lp-log{list-style:none; margin:0; padding:10px 20px 14px; display:flex; flex-direction:column; gap:4px; border-top:1px solid #26231f;}
+.lp-log li{display:grid; grid-template-columns:74px minmax(0,1fr); gap:10px; align-items:baseline; font-size:12.5px; color:var(--lp-dim); opacity:.6;}
+.lp-log li:last-child{opacity:1; color:var(--lp-text);}
+.lp-log li:nth-last-child(2){opacity:.8;}
+.lp-tag{font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; padding:2px 6px; border-radius:4px; background:#26231f; color:var(--lp-dim); text-align:center;}
+.lp-log li.good .lp-tag{color:var(--lp-good);} .lp-log li.warn .lp-tag{color:var(--lp-warn);} .lp-log li.bad .lp-tag{color:var(--lp-bad);}
+.lp-text{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+@media (max-width:700px){
+  .lp-head{padding:14px 14px 0;}
+  .lp-counters{gap:14px; width:100%; justify-content:space-between;}
+  .lp-counters dd{font-size:17px;}
+  .lp-svg{max-height:none;}
+  .lp-log{padding:10px 14px 12px;}
+  .lp-log li{grid-template-columns:62px minmax(0,1fr);}
+}
+@media (prefers-reduced-motion: reduce){
+  .lp-spoke.on, .lp-you.on rect, .lp-title b::after{animation:none !important;}
+}
