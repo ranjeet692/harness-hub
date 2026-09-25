@@ -7,6 +7,8 @@ import { DomainPage } from "./pages/DomainPage";
 import { ConceptPage, ConceptsIndex } from "./pages/Concepts";
 import { Contribute } from "./pages/Contribute";
 import { NotFound } from "./pages/NotFound";
+import { BlueprintGuide, BlueprintHome } from "./pages/Blueprint";
+import { BlueprintBuilder } from "./pages/BlueprintBuilder";
 import { CONCEPT_BY_SLUG } from "./engine/concepts";
 
 type Theme = "system" | "light" | "dark";
@@ -28,14 +30,17 @@ function useTheme(): [Theme, () => void] {
 export function App() {
   const route = useRoute();
   const [theme, cycleTheme] = useTheme();
-  const [a, b] = route.path;
+  const [a, b, c] = route.path;
 
   let page: React.ReactElement;
   let title = "harness-hub";
   if (!a) page = <Home />;
-  else if (a === "d" && b) { page = <DomainPage id={b} concept={route.query.get("concept")} />; title = DOMAINS.find(d => d.id === b)?.title ?? title; }
+  else if (a === "d" && b) { page = <DomainPage id={b} view={c === "blueprint" ? "blueprint" : "run"} concept={route.query.get("concept")} />; title = DOMAINS.find(d => d.id === b)?.title ?? title; }
   else if (a === "concepts" && !b) { page = <ConceptsIndex />; title = "Concepts · harness-hub"; }
   else if (a === "concepts" && b) { page = <ConceptPage slug={b} />; title = (CONCEPT_BY_SLUG[b]?.label ?? "Concept") + " · harness-hub"; }
+  else if (a === "blueprint" && !b) { page = <BlueprintHome />; title = "Blueprint · harness-hub"; }
+  else if (a === "blueprint" && b === "guide") { page = <BlueprintGuide />; title = "Blueprint guide · harness-hub"; }
+  else if (a === "blueprint" && b === "build") { page = <BlueprintBuilder step={c} />; title = "Blueprint builder · harness-hub"; }
   else if (a === "contribute") { page = <Contribute />; title = "Contribute · harness-hub"; }
   else page = <NotFound />;
 
@@ -57,6 +62,7 @@ export function App() {
             {DOMAINS.map(d => <a key={d.id} href={href(`/d/${d.id}`)} aria-current={current(`/d/${d.id}`)}>{d.shortTitle}</a>)}
             <span className="nav-sep" aria-hidden="true" />
             <a href={href("/concepts")} aria-current={current("/concepts")}>Concepts</a>
+            <a href={href("/blueprint")} aria-current={current("/blueprint")}>Blueprint</a>
             <a href={href("/contribute")} aria-current={current("/contribute")}>Contribute</a>
             <a href={REPO} target="_blank" rel="noreferrer">GitHub</a>
           </div>
