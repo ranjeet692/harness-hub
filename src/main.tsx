@@ -12,6 +12,7 @@ import "./styles/canvas.css";
 import "./styles/onboarding.css";
 import "./styles/loop.css";
 import "./styles/identity.css";
+import "./styles/blueprint.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
