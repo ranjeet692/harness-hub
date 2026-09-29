@@ -9,7 +9,9 @@ import { Contribute } from "./pages/Contribute";
 import { NotFound } from "./pages/NotFound";
 import { BlueprintGuide, BlueprintHome } from "./pages/Blueprint";
 import { BlueprintBuilder } from "./pages/BlueprintBuilder";
-import { CONCEPT_BY_SLUG } from "./engine/concepts";
+import { About } from "./pages/About";
+import { applyMeta, metaFor } from "./seo";
+import { SITE } from "./site";
 
 type Theme = "system" | "light" | "dark";
 const THEME_KEY = "harness-hub.theme";
@@ -33,18 +35,19 @@ export function App() {
   const [a, b, c] = route.path;
 
   let page: React.ReactElement;
-  let title = "harness-hub";
   if (!a) page = <Home />;
-  else if (a === "d" && b) { page = <DomainPage id={b} view={c === "blueprint" ? "blueprint" : "run"} concept={route.query.get("concept")} />; title = DOMAINS.find(d => d.id === b)?.title ?? title; }
-  else if (a === "concepts" && !b) { page = <ConceptsIndex />; title = "Concepts · harness-hub"; }
-  else if (a === "concepts" && b) { page = <ConceptPage slug={b} />; title = (CONCEPT_BY_SLUG[b]?.label ?? "Concept") + " · harness-hub"; }
-  else if (a === "blueprint" && !b) { page = <BlueprintHome />; title = "Blueprint · harness-hub"; }
-  else if (a === "blueprint" && b === "guide") { page = <BlueprintGuide />; title = "Blueprint guide · harness-hub"; }
-  else if (a === "blueprint" && b === "build") { page = <BlueprintBuilder step={c} />; title = "Blueprint builder · harness-hub"; }
-  else if (a === "contribute") { page = <Contribute />; title = "Contribute · harness-hub"; }
+  else if (a === "d" && b) { page = <DomainPage id={b} view={c === "blueprint" ? "blueprint" : "run"} concept={route.query.get("concept")} />; }
+  else if (a === "concepts" && !b) { page = <ConceptsIndex />; }
+  else if (a === "concepts" && b) { page = <ConceptPage slug={b} />; }
+  else if (a === "blueprint" && !b) { page = <BlueprintHome />; }
+  else if (a === "blueprint" && b === "guide") { page = <BlueprintGuide />; }
+  else if (a === "blueprint" && b === "build") { page = <BlueprintBuilder step={c} />; }
+  else if (a === "about" && !b) page = <About />;
+  else if (a === "contribute") { page = <Contribute />; }
   else page = <NotFound />;
 
-  useEffect(() => { document.title = title; }, [title]);
+  const key = route.path.join("/");
+  useEffect(() => { applyMeta(metaFor("/" + key)); }, [key]);
   const current = (p: string) => ("/" + route.path.join("/") === p || (p !== "/" && ("/" + route.path.join("/")).startsWith(p)) ? "page" : undefined);
 
   return (
@@ -64,6 +67,7 @@ export function App() {
             <a href={href("/concepts")} aria-current={current("/concepts")}>Concepts</a>
             <a href={href("/blueprint")} aria-current={current("/blueprint")}>Blueprint</a>
             <a href={href("/contribute")} aria-current={current("/contribute")}>Contribute</a>
+            <a href={href("/about")} aria-current={current("/about")}>About</a>
             <a href={REPO} target="_blank" rel="noreferrer">GitHub</a>
           </div>
           <button type="button" className="theme-btn" onClick={cycleTheme} aria-label={`Theme: ${theme}. Click to change.`} title={`Theme: ${theme}`}>
@@ -78,7 +82,7 @@ export function App() {
       <main id="main">{page}</main>
       <footer className="site-foot">
         <div className="site-foot-inner">
-          <p><b>harness-hub</b> · Everyday systems rebuilt as AI agent harnesses. MIT licensed.</p>
+          <p><b>harness-hub</b> · Everyday systems rebuilt as AI agent harnesses. Designed and built by <a href={href("/about")} rel="author">{SITE.author.name}</a>. MIT licensed.</p>
           <p><a href={REPO} target="_blank" rel="noreferrer">Source on GitHub</a><a href={href("/concepts")}>Concepts</a><a href={href("/contribute")}>Add a harness</a></p>
         </div>
       </footer>

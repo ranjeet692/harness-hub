@@ -38,7 +38,7 @@ export function LiveConsole({ domain, spec }: { domain: Domain; spec: LiveSpec }
   const listRef = useRef<HTMLOListElement>(null);
   const placeholder = useMemo(() => new LiveRun(spec, { mode, faults, client: { create: () => Promise.reject(new Error("not started")) }, model }), [spec, mode, faults, model]);
   const active = run ?? placeholder;
-  useSyncExternalStore(active.subscribe, active.getVersion);
+  useSyncExternalStore(active.subscribe, active.getVersion, active.getVersion);
   useEffect(() => () => run?.stop(), [run]);
 
   const st = active.state;
