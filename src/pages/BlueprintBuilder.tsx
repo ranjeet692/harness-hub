@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { CONCEPT_BY_ID, type ConceptId } from "../engine/concepts";
-import { href } from "../router";
+import { href, navigate } from "../router";
 import { exampleDesign } from "../blueprint/example";
 import { clientSummary, designDoc, evalCsv, skeleton } from "../blueprint/exports";
 import {
@@ -70,7 +70,7 @@ export function BlueprintBuilder({ step: stepParam }: { step?: string }) {
   const groups = useMemo(() => groupFindings(findings), [findings]);
   const cov = coverage(d, found);
   const set = (patch: Partial<Design>) => setD(prev => ({ ...prev, ...patch }));
-  const go = (id: StepId) => { window.location.hash = href(`/blueprint/build/${id}`).slice(1); };
+  const go = (id: StepId) => navigate(`/blueprint/build/${id}`);
 
   /** Carry what the requirement surfaced into the design, without overwriting anything you wrote. */
   function applyFindings(prev: Design): Design {

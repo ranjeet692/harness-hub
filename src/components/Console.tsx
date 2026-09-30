@@ -22,7 +22,7 @@ export function Console({ domain, focusConcept }: { domain: Domain; focusConcept
   const [example, setExample] = useState(true);
   const [selected, setSelected] = useState<ConceptId | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
-  useSyncExternalStore(run.subscribe, run.getVersion);
+  useSyncExternalStore(run.subscribe, run.getVersion, run.getVersion);
 
   // Worked example on load: naive first (fills the comparison), then hardened (shown).
   useEffect(() => {

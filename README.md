@@ -2,6 +2,8 @@
 
 **The model is the engine. The harness is the car.**
 
+**Live site:** https://ranjeet692.github.io/harness-hub/ · Built by [Ranjeet Kumar](https://ranjeet692.github.io/harness-hub/about/)
+
 harness-hub rebuilds everyday systems as AI agent harnesses, so you can watch the parts of a harness at work: the context the model sees, the tools it can call, the loop that keeps it going, the guardrails that keep it safe, and the scorecard that tells you whether it worked. Every scenario runs through a **hardened** harness and a **naive** one, side by side, so you see exactly what each piece of harness engineering buys you.
 
 | Domain | The scenario | Hardened vs naive, all edge cases on |
@@ -24,6 +26,7 @@ harness-hub rebuilds everyday systems as AI agent harnesses, so you can watch th
 - **A diagram canvas for the diagram agent.** Shapes and arrows appear as the agent draws them, next to the checks verification runs: which of the eight brief items are on the canvas, the graph rules (one start, an end, labelled branches, no arrow into nothing, nothing unreachable or overlapping), an export-to-Mermaid-and-parse-back round trip, and whether your hand edits survived. The checks are real functions in `src/domains/diagram/model.ts`, with their own tests.
 - **A system map for the onboarding agent.** The HR record sits in the middle as the source of truth, with the week-old ticket beside it and every downstream system around it: payroll, finance, identity, procurement, facilities and the IT helpdesk. Each field is marked as it's written, so you see a stale start date or a second identity the moment it lands. Reconciliation (`reconcile` and `policyFindings` in `src/domains/onboarding/model.ts`) is real code with its own tests.
 - **A real-looking code editor for the coding agent.** Explorer with git decorations, a diff gutter against main, the agent's terminal and a status bar, all following the run. In live mode it shows the real files the model edits.
+- **Every page is a real URL, prerendered.** `npm run build` renders each page to static HTML with its own title, description, canonical URL, Open Graph image and JSON-LD, and writes `sitemap.xml`. Search engines and link previews see the full content; the app takes over in the browser. Old `#/` links redirect.
 - **Concept guides** for all 20 concepts: why each one matters, what breaks without it, how to build it, a code sketch, and links into each domain's trace.
 
 ### The 20 concepts

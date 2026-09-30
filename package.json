@@ -2,11 +2,11 @@
   "name": "harness-hub",
   "private": true,
   "version": "0.1.0",
-  "description": "Everyday systems rebuilt as AI agent harnesses: see context, tools, loop control, safety and evals in action.",
+  "description": "An open-source playground for AI agent harness engineering: six agents run in a hardened and a naive harness, with 20 concepts, evals and a requirement-to-design method.",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -27,5 +27,17 @@
     "typescript": "^5.9.3",
     "vite": "^8.3.0",
     "vitest": "^5.0.1"
-  }
+  },
+  "homepage": "https://ranjeet692.github.io/harness-hub/",
+  "author": "Ranjeet Kumar (https://github.com/ranjeet692)",
+  "keywords": [
+    "ai-agents",
+    "agent-harness",
+    "llm",
+    "claude",
+    "agentic-ai",
+    "evals",
+    "prompt-injection",
+    "ai-engineering"
+  ]
 }
