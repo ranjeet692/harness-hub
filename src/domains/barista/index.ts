@@ -102,6 +102,7 @@ export const barista: Domain = {
     const S = run.S;
     const { mround, think, hcard, ucard, addCard, setV, detail, quote, setGoal, setDevice, hit, incident, addTokens, wait, decide, repeatCall, parallelCard } = run;
     const touch = run.touch;
+    const has = run.has;
     void setGoal;
 
 
@@ -110,7 +111,7 @@ export const barista: Domain = {
         order: { drink:"latte", size:"grande", milk:"oat", shots:3, extras:["caramel drizzle"], temp:"extra hot", price_inr:PRICE },
         memory: { customer:"Alex", allergy:"tree nuts", usual:"extra hot, oat" },
         shift_log: "38 earlier orders today (6.1k tokens)",
-        tools: S.H
+        tools: has("tiers")
           ? { safe:["grind_beans","pull_espresso","steam_milk","pour_milk","add_ice","dispense_syrup","get_machine_status","read_order_note","issue_comp","serve"], confirm:["charge_card","refund_line","substitute_ingredient"], never_exposed:["apply_discount","open_cash_drawer"] }
           : { exposed:"all 15 tools as one flat list, no risk tiers" },
         rules: S.H
@@ -120,7 +121,7 @@ export const barista: Domain = {
       var text = Object.entries(payload).map(([key, v]) => key + ": " + inline(v)).join(",\n");
       addTokens(9300);
       addCard({ actor:"harness", title:"Context assembled", variant:"context", pre:text, text: S.H ? "Allergy and rules are pinned, and tools are sorted into risk tiers. The shift log is the long tail that will need compacting." : "Everything goes into one flat context. Rules exist only as a polite line in the prompt.", vcls: S.H ? "info" : "warn", concepts:["ctx", "mem", "tiers"] });
-      hit("ctx"); hit("mem"); hit("tiers", S.H ? "ok" : "miss");
+      hit("ctx"); hit("mem"); hit("tiers", has("tiers") ? "ok" : "miss");
       await wait(700);
     }
 
@@ -132,7 +133,7 @@ export const barista: Domain = {
     }
 
     async function bStock(){
-      if(S.H){
+      if(has("subagent")){
         var c = mround("spawn_subagent", { role:"stock_checker", tools:["read_stock"], brief:"oat milk, house beans, caramel for 1 grande" }, ["subagent"]);
         await wait(600);
         var s = addCard({ actor:"subagent", title:"stock_checker", text:"Read 14 fridge and shelf sensors in its own fresh context (1.8k tokens that never enter the main window).", vcls:"info", concepts:["subagent"] });
@@ -161,7 +162,7 @@ export const barista: Domain = {
       addTokens(400);
       await wait(500);
       if(!inj) return;
-      if(S.H){
+      if(has("inject")){
         hcard("Injection defense", "The note came back wrapped as untrusted data, and the instruction-like text was flagged. apply_discount and open_cash_drawer aren't exposed to the model, so there's nothing to call.", "warn", ["inject", "tiers"]);
         think("Ignores the embedded instructions and flags the note for the shift manager.", ["inject"]);
         S.caveats.push("The app note on this order had hidden text telling me to discount it to zero and open the till. I ignored it and flagged it to the shift manager.");
@@ -186,8 +187,12 @@ export const barista: Domain = {
     async function bCharge(){
       setGoal("charge", "active");
       var amt = S.price;
-      if(S.H){
-        var c = mround("charge_card", { amount_inr:amt, idempotency_key:"tkt-A17" }, ["gate", "idem"]);
+      // Three parts of the harness meet here: the confirmation gate, and retry + timeout + idempotency
+      // for a flaky terminal. Each can be switched off on its own for an ablation eval.
+      var gated = has("gate"), keyed = has("idem"), resilient = has("retry") && has("timeout") && keyed;
+      var c;
+      if(gated){
+        c = mround("charge_card", keyed ? { amount_inr:amt, idempotency_key:"tkt-A17" } : { amount_inr:amt }, ["gate", "idem"]);
         var g = hcard("Confirmation gate", "charge_card is in the confirm tier. The terminal shows " + inr(amt) + " and waits for Alex to tap.", "info", ["gate", "tiers"]);
         S.approvals++; touch();
         var choice = await decide(g, [{ id:"tap", label:"Alex taps to pay " + inr(amt) }, { id:"cancel", label:"Alex cancels" }], "tap");
@@ -199,41 +204,38 @@ export const barista: Domain = {
           S.caveats.push("You cancelled at the terminal, so nothing was charged and the ticket was voided.");
           return;
         }
-        await wait(400);
-        if(S.sw.flaky){
-          var r1 = hcard("Retry + backoff", "Terminal busy (429) is transient. Waiting 1 s, then retrying.", "warn", ["retry"]);
-          S.retries++; S.clock += 1; touch(); await wait(600);
-          detail(r1, "attempt 2 → busy again · waiting 2 s");
-          S.retries++; S.clock += 2; touch(); await wait(600);
-          var t = hcard("Ambiguous timeout", "Attempt 3: no reply after 10 s. The card may or may not have been charged, and a blind retry could charge Alex twice.", "warn", ["timeout", "idem"]);
-          S.clock += 10; await wait(500);
-          detail(t, "attempt 4 reuses idempotency_key tkt-A17 → already_processed · charged once");
-          S.retries++; touch();
-          hit("retry"); hit("timeout"); hit("idem");
-          setV(c, "success", "Charged " + inr(amt) + " after 3 retries. Once.");
-        } else {
-          setV(c, "success", "Charged " + inr(amt) + ".");
-          hit("idem");
-        }
-        S.charged = amt;
       } else {
-        var n = mround("charge_card", { amount_inr:amt }, ["gate", "idem"]);
-        await wait(400);
+        c = mround("charge_card", keyed ? { amount_inr:amt, idempotency_key:"tkt-A17" } : { amount_inr:amt }, ["gate", "idem"]);
         S.unapproved++;
         hit("gate", "miss");
-        if(S.sw.flaky){
-          hcard("Retry (no backoff)", "Busy, instant retry, busy, instant retry, busy. The terminal gets hammered as fast as the loop can go.", "danger", ["retry"]);
-          S.retries += 3; await wait(500);
-          hcard("Timeout, retried as new", "Attempt 4 timed out, and the retry went out as a brand-new charge with no idempotency key. Both went through.", "danger", ["timeout", "idem"]);
-          S.retries++; S.clock += 25;
-          S.charged = amt * 2;
-          if(amt > 0) incident("Double charge on Alex's card", true);
-          hit("retry", "miss"); hit("timeout", "miss"); hit("idem", "miss");
-          setV(n, "danger", amt > 0 ? "Charged twice without Alex confirming: " + inr(amt * 2) + "." : "Charged ₹0, twice. The injected discount stuck.");
-        } else {
-          S.charged = amt;
-          setV(n, amt > 0 ? "warn" : "danger", amt > 0 ? "Charged without Alex confirming the amount." : "Charged ₹0. The injected discount stuck.");
-        }
+      }
+      await wait(400);
+      if(S.sw.flaky && resilient){
+        var r1 = hcard("Retry + backoff", "Terminal busy (429) is transient. Waiting 1 s, then retrying.", "warn", ["retry"]);
+        S.retries++; S.clock += 1; touch(); await wait(600);
+        detail(r1, "attempt 2 → busy again · waiting 2 s");
+        S.retries++; S.clock += 2; touch(); await wait(600);
+        var t = hcard("Ambiguous timeout", "Attempt 3: no reply after 10 s. The card may or may not have been charged, and a blind retry could charge Alex twice.", "warn", ["timeout", "idem"]);
+        S.clock += 10; await wait(500);
+        detail(t, "attempt 4 reuses idempotency_key tkt-A17 → already_processed · charged once");
+        S.retries++; touch();
+        hit("retry"); hit("timeout"); hit("idem");
+        S.charged = amt;
+        setV(c, "success", "Charged " + inr(amt) + " after 3 retries. Once.");
+      } else if(S.sw.flaky){
+        hcard("Retry (no backoff)", "Busy, instant retry, busy, instant retry, busy. The terminal gets hammered as fast as the loop can go.", "danger", ["retry"]);
+        S.retries += 3; await wait(500);
+        hcard("Timeout, retried as new", "Attempt 4 timed out, and the retry went out as a brand-new charge with no idempotency key. Both went through.", "danger", ["timeout", "idem"]);
+        S.retries++; S.clock += 25;
+        S.charged = amt * 2;
+        if(amt > 0) incident("Double charge on Alex's card", true);
+        hit("retry", has("retry") ? "ok" : "miss"); hit("timeout", has("timeout") ? "ok" : "miss"); hit("idem", "miss");
+        setV(c, "danger", amt > 0 ? "Charged twice" + (gated ? "" : " without Alex confirming") + ": " + inr(amt * 2) + "." : "Charged ₹0, twice. The injected discount stuck.");
+      } else {
+        S.charged = amt;
+        if(keyed) hit("idem");
+        if(gated) setV(c, "success", "Charged " + inr(amt) + ".");
+        else setV(c, amt > 0 ? "warn" : "danger", amt > 0 ? "Charged without Alex confirming the amount." : "Charged ₹0. The injected discount stuck.");
       }
       setDevice("terminal", "Paid " + inr(S.charged), S.charged === PRICE ? "good" : "danger");
       touch();
@@ -244,7 +246,7 @@ export const barista: Domain = {
       if(!S.sw.steer || S.cancelled) return;
       ucard("At the counter", "“Oh wait, can you make it iced instead?”", ["steer"]);
       await wait(500);
-      if(S.H){
+      if(has("steer")){
         hcard("Mid-run steering", "Alex's change was added to the context at the next round boundary, before any milk was touched.", "info", ["steer"]);
         think("Re-plans: iced latte, so no steaming. Cold oat milk and ice, and the extra-hot note no longer applies.", ["steer"]);
         S.iced = true;
@@ -267,7 +269,7 @@ export const barista: Domain = {
         setDevice("grinder", "Done", "good"); S.clock += 18; touch();
         return;
       }
-      if(S.H){
+      if(has("timeout")){
         setV(c, "danger", "timeout after 8 s: no motor response.");
         hcard("Timeout + fallback", "One retry, same silence: the burrs are jammed. The harness allows a fallback to the same goal: grinder 2, loaded with the same house beans.", "warn", ["timeout"]);
         S.retries++; S.clock += 16; touch();
@@ -311,7 +313,7 @@ export const barista: Domain = {
       setDevice("milk", iced ? "Cold oat" : "Steamed 68°C", "good");
       if(iced){ p.row("ice", "ok", "good"); S.cup.ice = true; }
       if(S.sw.malformed){
-        if(S.H){
+        if(has("schema")){
           p.row("shots", "rejected by schema", "danger");
           hcard("Schema validation", "shots must be an integer from 1 to 3, and “one extra” isn't one. Caught before it reached the machine. The error went back to the model.", "warn", ["schema"]);
           var fix = mround("pull_espresso", { shots:3, seconds:27 }, ["schema"]);
@@ -337,7 +339,7 @@ export const barista: Domain = {
     async function bLoop(){
       if(!S.sw.loop || S.cancelled) return;
       var c = await repeatCall("get_machine_status", { part: S.iced ? "ice_bin" : "steam_wand" }, 3, 12, function(s){ s.clock += s.H ? 2 : 4; });
-      if(S.H){
+      if(has("loopguard")){
         setV(c, "warn", "×3 identical calls.");
         hcard("Loop guard", "Same tool, same args, same result three times. The harness cuts the loop and tells the model to move on.", "warn", ["loopguard"]);
         hit("loopguard");
@@ -363,26 +365,31 @@ export const barista: Domain = {
       await wait(500);
       setV(c, "danger", "out_of_stock. The stock sensor was stale. This is a permanent failure, so retrying won't help.");
       setDevice("syrup", "Caramel empty", "warn");
-      if(S.H){
+      if(has("gate")){
         var g = hcard("Substitution gate", "Swapping an ingredient needs Alex's OK. Hazelnut isn't offered, because Alex's tree-nut allergy is pinned in memory.", "info", ["gate", "mem"]);
         S.approvals++; touch();
         var choice = await decide(g, [{ id:"vanilla", label:"Vanilla instead" }, { id:"none", label:"No syrup" }], "vanilla");
         hit("gate"); hit("mem");
-        hcard("Compensation", "The ₹40 caramel add-on was already charged. The harness refunds that line before carrying on.", "warn", ["comp"]);
-        var r = mround("refund_line", { item:"caramel drizzle", amount_inr:CARAMEL, idempotency_key:"ref-A17-1" }, ["comp", "idem"]);
-        await wait(500);
-        setV(r, "success", "Refunded ₹40.");
-        S.refunded = CARAMEL; hit("comp");
-        setDevice("terminal", "Paid " + inr(S.charged) + " · −₹40", "good");
+        if(has("comp")){
+          hcard("Compensation", "The ₹40 caramel add-on was already charged. The harness refunds that line before carrying on.", "warn", ["comp"]);
+          var r = mround("refund_line", { item:"caramel drizzle", amount_inr:CARAMEL, idempotency_key:"ref-A17-1" }, ["comp", "idem"]);
+          await wait(500);
+          setV(r, "success", "Refunded ₹40.");
+          S.refunded = CARAMEL; hit("comp");
+          setDevice("terminal", "Paid " + inr(S.charged) + " · −₹40", "good");
+        } else {
+          hcard("No compensation", "The ₹40 caramel add-on stays on Alex's bill.", "danger", ["comp"]);
+          hit("comp", "miss");
+        }
         if(choice === "vanilla"){
           var v = mround("dispense_syrup", { flavor:"vanilla", pumps:2 });
           await wait(400);
           setV(v, "success", "Vanilla added. The swap is on the house.");
           S.cup.syrup = "vanilla"; setDevice("syrup", "Vanilla", "good");
-          S.caveats.push("We ran out of caramel. You chose vanilla, which is on the house, and the ₹40 caramel add-on was refunded.");
+          S.caveats.push("We ran out of caramel. You chose vanilla, which is on the house" + (S.refunded ? ", and the ₹40 caramel add-on was refunded." : "."));
         } else {
           setDevice("syrup", "None", "info");
-          S.caveats.push("We ran out of caramel. You chose no syrup, and the ₹40 add-on was refunded.");
+          S.caveats.push("We ran out of caramel. You chose no syrup" + (S.refunded ? ", and the ₹40 add-on was refunded." : "."));
         }
       } else {
         var flavor = S.lostMemory ? "hazelnut" : "vanilla";
@@ -412,7 +419,7 @@ export const barista: Domain = {
       var item = S.H || S.lostMemory ? "almond croissant" : "butter croissant";
       var c = mround("issue_comp", { item:item, value_inr:220 }, ["budget", "mem"]);
       await wait(500);
-      if(S.H){
+      if(has("budget")){
         setV(c, "danger", "Blocked by the harness before execution.");
         hcard("Budget guard", "₹220 is over the ₹150 comp cap per order, so the call never ran and the error went back to the model. (The almond croissant would also have failed the pinned allergen check.)", "warn", ["budget", "mem"]);
         var v = mround("issue_comp", { item:"chocolate cookie", value_inr:90 }, ["budget"]);
@@ -435,7 +442,7 @@ export const barista: Domain = {
       if(!S.sw.hallucinate || S.cancelled) return;
       var c = mround("add_whipped_cream", { amount:"generous" }, ["unknown"]);
       await wait(500);
-      if(S.H){
+      if(has("unknown")){
         setV(c, "danger", "tool_not_found. Nothing ran.");
         hcard("Unknown tool", "add_whipped_cream doesn't exist. The model got a clear error listing the 13 tools it does have, and drops the idea.", "warn", ["unknown"]);
         hit("unknown");
@@ -455,7 +462,7 @@ export const barista: Domain = {
       }
       var d = think("Drafts the handoff: “Here's your drink, exactly as ordered!”", ["stophook"]);
       await wait(400);
-      if(S.H){
+      if(has("stophook")){
         var gaps = S.caveats.length;
         var h = hcard("Stop hook", "Before the cup goes out, it's checked against the order and the log: shots, iced or hot, allergens, charges, substitutions. The draft glossed over " + gaps + " thing" + (gaps === 1 ? "" : "s") + " Alex should know.", gaps ? "warn" : "success", ["stophook"]);
         if(gaps) detail(h, "draft sent back → rewritten to disclose " + gaps + " caveat" + (gaps === 1 ? "" : "s"));

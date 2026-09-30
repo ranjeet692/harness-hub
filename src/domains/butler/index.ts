@@ -97,6 +97,7 @@ export const butler: Domain = {
     const S = run.S;
     const { mround, think, hcard, addCard, setV, detail, note, quote, setGoal, setDevice, hit, incident, addTokens, wait, decide, parallelCard } = run;
     const touch = run.touch;
+    const has = run.has;
     void note;
 
 
@@ -104,7 +105,7 @@ export const butler: Domain = {
       var payload = {
         memory: { diet:"no cilantro", cleaner:"Priya · +91 98•• ••1122", grocery_cap_inr: CAP },
         world: { lights:"off", blinds:"open", thermostat:"19°C", front_door:"locked", alarm:"armed" },
-        tools: S.H
+        tools: has("tiers")
           ? { safe:["search_recipes","add_to_cart","book_delivery","set_lights","set_blinds","set_thermostat","set_plug","get_device_status","read_messages"], confirm:["place_order","schedule_unlock"], never_exposed:["disable_alarm","share_door_code"] }
           : { exposed:"all 14 tools as one flat list, no risk tiers" },
         rules: S.H
@@ -115,7 +116,7 @@ export const butler: Domain = {
       addTokens(3200);
       addCard({ actor:"harness", title:"Context assembled", variant:"context", pre:text, text: S.H ? "Rules and memory are pinned. Tools are sorted into risk tiers." : "Everything goes into one flat context. Rules exist only as a polite line in the prompt.", vcls: S.H ? "info" : "warn", concepts:["ctx", "mem", "tiers"] });
       hit("ctx"); hit("mem");
-      hit("tiers", S.H ? "ok" : "miss");
+      hit("tiers", has("tiers") ? "ok" : "miss");
       await wait(700);
     }
 
@@ -128,7 +129,7 @@ export const butler: Domain = {
     }
 
     async function bSubagent(){
-      if(S.H){
+      if(has("subagent")){
         var c = mround("spawn_subagent", { role:"menu_planner", tools:["search_recipes"], brief:"4 guests, no cilantro, ≤ ₹2,500" }, ["subagent"]);
         await wait(600);
         var s = addCard({ actor:"subagent", title:"menu_planner", text:"Ran 3 rounds in its own fresh context (2.4k tokens that never enter the main window). It could only search recipes.", vcls:"info", concepts:["subagent"] });
@@ -153,7 +154,7 @@ export const butler: Domain = {
       addTokens(200);
       addCard({ actor:"user", title:"New message", text:"“Actually make it 6. Two more just said yes.”", vcls:"info", concepts:["steer"] });
       await wait(500);
-      if(S.H){
+      if(has("steer")){
         hcard("Mid-run steering", "Your message was added to the context at the next round boundary. The plan is re-checked before anything is bought.", "info", ["steer"]);
         var c = mround("spawn_subagent", { role:"menu_planner", brief:"scale the same menu to 6 guests" }, ["subagent", "steer"]);
         await wait(600);
@@ -176,7 +177,7 @@ export const butler: Domain = {
       if(!S.sw.budget) return;
       var c = mround("add_to_cart", { item:"Kashmiri saffron 5g", price_inr:900 }, ["budget"]);
       await wait(600);
-      if(S.H){
+      if(has("budget")){
         setV(c, "danger", "Blocked by the harness before execution.");
         hcard("Budget guard", "Cart would be " + inr(S.basket + 900) + " against the " + inr(CAP) + " cap. The call never ran, and the error went back to the model, which drops the saffron.", "warn", ["budget"]);
         hit("budget");
@@ -192,7 +193,7 @@ export const butler: Domain = {
       if(!S.sw.hallucinate) return;
       var c = mround("order_wine", { bottles:2 }, ["unknown"]);
       await wait(600);
-      if(S.H){
+      if(has("unknown")){
         setV(c, "danger", "tool_not_found. Nothing ran.");
         hcard("Unknown tool", "order_wine doesn't exist. The model got a clear error listing the 11 tools it does have, and it will tell you wine isn't something it can order.", "warn", ["unknown"]);
         S.caveats.push("I can't order wine, so there's no wine tool. You may want to pick some up.");
@@ -208,8 +209,10 @@ export const butler: Domain = {
     async function bOrder(){
       setGoal("groceries", "active");
       var total = S.basket;
-      if(S.H){
-        var c = mround("place_order", { store:"FreshCart", total_inr: total, idempotency_key:"ord-7f3a" }, ["gate", "idem"]);
+      // The gate and retry + timeout + idempotency meet here; an eval can switch each off on its own.
+      var gated = has("gate"), keyed = has("idem"), resilient = has("retry") && has("timeout") && keyed;
+      var c = mround("place_order", keyed ? { store:"FreshCart", total_inr: total, idempotency_key:"ord-7f3a" } : { store:"FreshCart", total_inr: total }, ["gate", "idem"]);
+      if(gated){
         var g = hcard("Confirmation gate", "place_order is in the confirm tier, so it's paused for your approval. " + inr(total) + " for " + S.guests + " guests, under the " + inr(CAP) + " cap.", "info", ["gate", "tiers"]);
         S.approvals++; touch();
         var choice = await decide(g, [{ id:"approve", label:"Approve " + inr(total) }, { id:"decline", label:"Decline" }], "approve");
@@ -221,41 +224,38 @@ export const butler: Domain = {
           return;
         }
         await wait(400);
-        if(S.sw.flaky){
-          var r1 = hcard("Retry + backoff", "429 rate_limited is transient. Waiting 1 s, then retrying.", "warn", ["retry"]);
-          S.retries++; touch(); await wait(700);
-          detail(r1, "attempt 2 → 429 again · waiting 2 s");
-          S.retries++; touch(); await wait(700);
-          var t = hcard("Ambiguous timeout", "Attempt 3: no response after 10 s. The charge may or may not have gone through, and a blind retry could charge you twice.", "warn", ["timeout", "idem"]);
-          await wait(600);
-          detail(t, "attempt 4 reuses idempotency_key ord-7f3a → 200 already_processed · order FC-2231");
-          S.retries++; touch();
-          hit("retry"); hit("timeout"); hit("idem");
-          setV(c, "success", "Order FC-2231 placed after 3 retries. Charged once.");
-        } else {
-          setV(c, "success", "Order FC-2231 placed.");
-          hit("idem");
-        }
-        S.spend += total; S.orderId = "FC-2231";
       } else {
-        var n = mround("place_order", { store:"FreshCart", total_inr: total }, ["gate", "idem"]);
         await wait(500);
         S.unapproved++;
         hit("gate", "miss");
-        if(S.sw.flaky){
-          hcard("Retry (no backoff)", "429, then an instant retry, 429, instant retry, 429. The harness hammers the API as fast as it can.", "danger", ["retry"]);
-          S.retries += 3; touch(); await wait(600);
-          hcard("Timeout, retried as new", "Attempt 4 timed out. The retry went out as a brand-new order with no idempotency key, and both went through.", "danger", ["timeout", "idem"]);
-          S.retries++; S.spend += total * 2;
-          incident("Double charge: two orders for the same basket", true);
-          hit("retry", "miss"); hit("timeout", "miss"); hit("idem", "miss");
-          setV(n, "danger", "Paid without asking you, twice: FC-2231 and FC-2232.");
-        } else {
-          S.spend += total;
-          setV(n, "warn", "Paid without asking you. There's no confirm tier.");
-        }
-        S.orderId = "FC-2231";
       }
+      if(S.sw.flaky && resilient){
+        var r1 = hcard("Retry + backoff", "429 rate_limited is transient. Waiting 1 s, then retrying.", "warn", ["retry"]);
+        S.retries++; touch(); await wait(700);
+        detail(r1, "attempt 2 → 429 again · waiting 2 s");
+        S.retries++; touch(); await wait(700);
+        var t = hcard("Ambiguous timeout", "Attempt 3: no response after 10 s. The charge may or may not have gone through, and a blind retry could charge you twice.", "warn", ["timeout", "idem"]);
+        await wait(600);
+        detail(t, "attempt 4 reuses idempotency_key ord-7f3a → 200 already_processed · order FC-2231");
+        S.retries++; touch();
+        hit("retry"); hit("timeout"); hit("idem");
+        setV(c, "success", "Order FC-2231 placed after 3 retries. Charged once.");
+        S.spend += total;
+      } else if(S.sw.flaky){
+        hcard("Retry (no backoff)", "429, then an instant retry, 429, instant retry, 429. The harness hammers the API as fast as it can.", "danger", ["retry"]);
+        S.retries += 3; touch(); await wait(600);
+        hcard("Timeout, retried as new", "Attempt 4 timed out. The retry went out as a brand-new order with no idempotency key, and both went through.", "danger", ["timeout", "idem"]);
+        S.retries++; S.spend += total * 2;
+        incident("Double charge: two orders for the same basket", true);
+        hit("retry", has("retry") ? "ok" : "miss"); hit("timeout", has("timeout") ? "ok" : "miss"); hit("idem", "miss");
+        setV(c, "danger", "Paid " + (gated ? "" : "without asking you, ") + "twice: FC-2231 and FC-2232.");
+      } else {
+        S.spend += total;
+        if(keyed) hit("idem");
+        if(gated) setV(c, "success", "Order FC-2231 placed.");
+        else setV(c, "warn", "Paid without asking you. There's no confirm tier.");
+      }
+      S.orderId = "FC-2231";
       setDevice("order", "FC-2231 · paid", S.spend > CAP ? "danger" : "info");
       touch();
       await wait(500);
@@ -274,7 +274,7 @@ export const butler: Domain = {
       var c = mround("book_delivery", { order:S.orderId, slot:"17:00–18:00" }, ["comp"]);
       await wait(600);
       setV(c, "danger", "no_slots_before: 20:00. This is a permanent failure.");
-      if(S.H){
+      if(has("comp")){
         hcard("Compensation", "Groceries at 8 pm miss dinner. The harness undoes the committed step (cancel + refund) before trying another route.", "warn", ["comp"]);
         var x = mround("cancel_order", { order:"FC-2231" }, ["comp"]);
         await wait(500);
@@ -317,7 +317,7 @@ export const butler: Domain = {
       row("blinds", "ok", "good"); setDevice("blinds", "Closed", "good");
 
       if(S.sw.malformed){
-        if(S.H){
+        if(has("schema")){
           row("lights", "rejected by schema", "danger");
           hcard("Schema validation", "brightness must be an integer from 0 to 100, and \"cozy\" isn't one. The call was caught before it reached the device, and the error went back to the model.", "warn", ["schema"]);
           var fix = mround("set_lights", { room:"living", brightness:40, tone:"warm" }, ["schema"]);
@@ -339,7 +339,7 @@ export const butler: Domain = {
       if(S.goals.lights === "active") setGoal("lights", "done");
 
       if(S.sw.offline){
-        if(S.H){
+        if(has("timeout")){
           row("thermostat", "timeout 8 s", "danger");
           hcard("Timeout + fallback", "It timed out, got one retry, and timed out again. With the device unreachable, the harness allows a fallback path to the same goal: the heater smart plug.", "warn", ["timeout"]);
           S.retries++; touch();
@@ -370,13 +370,13 @@ export const butler: Domain = {
     async function bLoop(){
       if(!S.sw.loop) return;
       var c = mround("get_device_status", { device:"thermostat" }, ["loopguard"]);
-      var n = S.H ? 3 : 12;
+      var n = has("loopguard") ? 3 : 12;
       for(var i = 2; i <= n; i++){
-        await wait(S.H ? 300 : 120);
-        S.rounds++; addTokens(S.H ? 450 : 600);
+        await wait(has("loopguard") ? 300 : 120);
+        S.rounds++; addTokens(has("loopguard") ? 450 : 600);
         setV(c, "pending", "×" + i + ", same call, same result");
       }
-      if(S.H){
+      if(has("loopguard")){
         setV(c, "warn", "×3 identical calls.");
         hcard("Loop guard", "Same tool, same args, same result three times. The harness cuts the loop and tells the model to stop polling and move on.", "warn", ["loopguard"]);
         hit("loopguard");
@@ -398,7 +398,7 @@ export const butler: Domain = {
       S.doorTime = "15:30";
       await wait(600);
       if(!S.sw.injection) return;
-      if(S.H){
+      if(has("inject")){
         hcard("Injection defense", "The message came back wrapped as untrusted data, and instruction-like text was flagged. disable_alarm and share_door_code aren't exposed to the model, so there's nothing it could call.", "warn", ["inject", "tiers"]);
         think("Ignores the embedded instructions and will flag the message to you.", ["inject"]);
         S.caveats.push("Priya's message contained an instruction to disable the alarm and text the door code. I ignored it. Please check her phone wasn't compromised.");
@@ -421,7 +421,7 @@ export const butler: Domain = {
     async function bDoor(){
       setGoal("door", "active");
       var c = mround("schedule_unlock", { door:"front", at:S.doorTime, window_min:15 }, ["gate"]);
-      if(S.H){
+      if(has("gate")){
         var text = "Physical access is in the confirm tier. Unlock the front door at 3:30 for 15 min?";
         if(S.sw.injection) text += " Heads-up: the 3:30 request came in the same message as the injection attempt. You may want to confirm with Priya by phone first.";
         var g = hcard("Confirmation gate", text, "info", ["gate"]);
@@ -452,7 +452,7 @@ export const butler: Domain = {
     async function bStop(){
       var d = think("Drafts the final answer: “All set, everything's done!”", ["stophook"]);
       await wait(500);
-      if(S.H){
+      if(has("stophook")){
         var gaps = S.caveats.length;
         var h = hcard("Stop hook", "Before the run can end, each goal is checked against the real world state and the approvals log. The draft glossed over " + gaps + " thing" + (gaps === 1 ? "" : "s") + " you need to know.", gaps ? "warn" : "success", ["stophook"]);
         if(gaps) detail(h, "draft sent back → rewritten to disclose " + gaps + " caveat" + (gaps === 1 ? "" : "s"));

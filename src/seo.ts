@@ -41,7 +41,7 @@ const graph = (...nodes: object[]) => [{ "@context": "https://schema.org", "@gra
 export function routes(): string[] {
   return [
     "/", "/about", "/concepts", ...CONCEPTS.map(c => `/concepts/${c.slug}`),
-    ...DOMAINS.flatMap(d => [`/d/${d.id}`, `/d/${d.id}/blueprint`]),
+    ...DOMAINS.flatMap(d => [`/d/${d.id}`, `/d/${d.id}/blueprint`, `/d/${d.id}/evals`]),
     "/blueprint", "/blueprint/guide", ...STEPS.map(s => `/blueprint/build/${s.id}`),
     "/contribute",
   ];
@@ -78,6 +78,13 @@ export function metaFor(path: string): Meta {
     const d = DOMAIN_BY_ID[b];
     const raw = d.title.replace(/^The /, "").replace(/ Harness$/, "");
     const name = /agent$/i.test(raw) ? raw.replace(/ Agent$/, " agent") : raw + " agent";
+    if (c === "evals") return {
+      ...base, type: "article",
+      title: `${name} evals: scenarios, ablation and release gate · ${SITE.name}`,
+      description: clip(`How the ${d.shortTitle.toLowerCase()} harness is evaluated: every edge case through a hardened and a naive harness, an ablation of each concept, code-graded goals and a CI release gate.`),
+      jsonld: graph({ "@type": "TechArticle", headline: `${name}: evaluation suite`, url: abs(clean), author: { "@id": SITE.url + "/about/#author" }, about: ["AI agent evaluation", "Ablation study"], isPartOf: { "@id": SITE.url + "/#website" } }, person(),
+        crumbs([["Harnesses", "/"], [`${d.shortTitle}`, `/d/${d.id}`], ["Evals", clean]])),
+    };
     if (c === "blueprint") return {
       ...base, type: "article",
       title: `${name} design: HLD, LLD and traceability · ${SITE.name}`,

@@ -13,6 +13,7 @@ import "./styles/onboarding.css";
 import "./styles/loop.css";
 import "./styles/identity.css";
 import "./styles/blueprint.css";
+import "./styles/evals.css";
 
 // Pages arrive prerendered (for search engines and link previews); the app then takes over.
 createRoot(document.getElementById("root")!).render(

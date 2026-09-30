@@ -59,6 +59,8 @@ export interface RunState {
   lostMemory: boolean;
   overflowNoted: boolean;
   falseCount: number;
+  /** Concepts switched off for an ablation eval. Empty in normal runs. */
+  off: ConceptId[];
   /** The tool call in flight (or last made), for scenes that animate the world. */
   now?: NowCall | null;
   /** Set once the run has reported and scored. */
