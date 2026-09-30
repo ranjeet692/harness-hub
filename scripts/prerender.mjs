@@ -10,7 +10,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
 const server = await import(pathToFileURL(join(root, "dist-ssr", "entry-server.js")).href);
-const { render, routes, metaFor, headTags, SITE } = server;
+const { render, routes, metaFor, headTags, SITE, warmEvals } = server;
+await warmEvals();
 
 const template = readFileSync(join(dist, "index.html"), "utf8");
 if (!template.includes("<!--app-head-->") || !template.includes("<!--app-html-->")) throw new Error("index.html is missing the <!--app-head--> or <!--app-html--> slot");

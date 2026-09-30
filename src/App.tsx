@@ -36,7 +36,7 @@ export function App() {
 
   let page: React.ReactElement;
   if (!a) page = <Home />;
-  else if (a === "d" && b) { page = <DomainPage id={b} view={c === "blueprint" ? "blueprint" : "run"} concept={route.query.get("concept")} />; }
+  else if (a === "d" && b) { page = <DomainPage id={b} view={c === "blueprint" ? "blueprint" : c === "evals" ? "evals" : "run"} concept={route.query.get("concept")} />; }
   else if (a === "concepts" && !b) { page = <ConceptsIndex />; }
   else if (a === "concepts" && b) { page = <ConceptPage slug={b} />; }
   else if (a === "blueprint" && !b) { page = <BlueprintHome />; }

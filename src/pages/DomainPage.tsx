@@ -7,8 +7,9 @@ import { LiveConsole } from "../live/LiveConsole";
 import { href } from "../router";
 import { NotFound } from "./NotFound";
 import { BlueprintTab } from "../components/BlueprintTab";
+import { EvalsTab } from "../components/EvalsTab";
 
-export function DomainPage({ id, concept, view = "run" }: { id: string; concept?: string | null; view?: "run" | "blueprint" }) {
+export function DomainPage({ id, concept, view = "run" }: { id: string; concept?: string | null; view?: "run" | "blueprint" | "evals" }) {
   const domain = DOMAIN_BY_ID[id];
   const [tab, setTab] = useState<"scripted" | "live">("scripted");
   if (!domain) return <NotFound />;
@@ -28,9 +29,10 @@ export function DomainPage({ id, concept, view = "run" }: { id: string; concept?
       <nav className="view-tabs" aria-label="Harness views">
         <a href={href(`/d/${domain.id}`)} aria-current={view === "run" ? "page" : undefined}>Run it</a>
         <a href={href(`/d/${domain.id}/blueprint`)} aria-current={view === "blueprint" ? "page" : undefined}>Blueprint</a>
+        <a href={href(`/d/${domain.id}/evals`)} aria-current={view === "evals" ? "page" : undefined}>Evals</a>
       </nav>
 
-      {view === "blueprint" ? <BlueprintTab domain={domain} /> : <>
+      {view === "blueprint" ? <BlueprintTab domain={domain} /> : view === "evals" ? <EvalsTab domain={domain} /> : <>
       <div className="mode-tabs" role="tablist" aria-label="How the agent is driven">
         <button type="button" role="tab" aria-selected={tab === "scripted"} onClick={() => setTab("scripted")}>
           <b>Scripted run</b><span>Repeatable. Try every edge case.</span>

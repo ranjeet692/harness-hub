@@ -9,6 +9,8 @@ export interface RunOptions {
   sw: Record<string, boolean>;
   instant?: boolean;
   fast?: boolean;
+  /** Ablation: concepts switched off in an otherwise hardened harness. */
+  off?: ConceptId[];
 }
 
 class Aborted extends Error {}
@@ -38,6 +40,7 @@ export class Run {
       tokens: 0, tokensTotal: 0, rounds: 0, retries: 0, approvals: 0,
       incidents: [], unapproved: 0, falseClaims: [], caveats: [],
       goals: {}, devices: {}, hit: {}, lostMemory: false, overflowNoted: false, falseCount: 0,
+      off: [...(opts.off ?? [])],
     };
     domain.goals.forEach(g => (S.goals[g.id] = "pending"));
     domain.initState(S);
@@ -51,6 +54,9 @@ export class Run {
   emit = () => { this.version++; this.listeners.forEach(l => l()); };
   abort = () => { this.aborted = true; this.pending?.resolve("__abort__"); };
   setFast = (fast: boolean) => { this.S.fast = fast; };
+
+  /** Is this part of the harness active? True in the hardened harness unless ablated for an eval. */
+  has = (id: ConceptId) => this.S.H && !this.S.off.includes(id);
 
   /* ---------- state helpers ---------- */
   hit = (id: ConceptId, how: "ok" | "miss" = "ok") => {
@@ -154,11 +160,12 @@ export class Run {
   /** The same call repeated: the loop-guard pattern. */
   repeatCall = async (tool: string, args: Record<string, unknown>, hardCount: number, naiveCount: number, onEach?: (S: RunState) => void) => {
     const c = this.mround(tool, args, ["loopguard"]);
-    const n = this.S.H ? hardCount : naiveCount;
+    const guard = this.has("loopguard");
+    const n = guard ? hardCount : naiveCount;
     for (let i = 2; i <= n; i++) {
-      await this.wait(this.S.H ? 300 : 110);
+      await this.wait(guard ? 300 : 110);
       this.setNow(tool, args);
-      this.S.rounds++; this.addTokens(this.S.H ? 450 : 600);
+      this.S.rounds++; this.addTokens(guard ? 450 : 600);
       onEach?.(this.S);
       this.setV(c, "pending", "×" + i + ", same call, same result");
     }
@@ -185,7 +192,7 @@ export class Run {
   checkContext = async () => {
     const W = this.domain.window;
     if (this.S.tokens <= W * 0.75) return;
-    if (this.S.H) {
+    if (this.has("compact")) {
       const before = this.S.tokens;
       const c = this.hcard("Context compaction", `Context hit ${k(before)} of ${k(W)} (${Math.round((before / W) * 100)}%). ${this.domain.compactText}`, "info", ["compact", "mem"]);
       this.S.tokens = 5200; this.emit();
@@ -285,8 +292,8 @@ export class Run {
 }
 
 /** Run a domain start to finish with no delays and automatic decisions. */
-export async function runInstant(domain: Domain, mode: Mode, sw: Record<string, boolean>) {
-  const run = new Run(domain, { mode, sw, instant: true });
+export async function runInstant(domain: Domain, mode: Mode, sw: Record<string, boolean>, off: ConceptId[] = []) {
+  const run = new Run(domain, { mode, sw, instant: true, off });
   await run.start();
   return run;
 }
