@@ -41,7 +41,7 @@ const graph = (...nodes: object[]) => [{ "@context": "https://schema.org", "@gra
 export function routes(): string[] {
   return [
     "/", "/about", "/concepts", ...CONCEPTS.map(c => `/concepts/${c.slug}`),
-    ...DOMAINS.flatMap(d => [`/d/${d.id}`, `/d/${d.id}/blueprint`, `/d/${d.id}/evals`]),
+    ...DOMAINS.flatMap(d => [`/d/${d.id}`, `/d/${d.id}/blueprint`, `/d/${d.id}/evals`, `/d/${d.id}/production`]),
     "/blueprint", "/blueprint/guide", ...STEPS.map(s => `/blueprint/build/${s.id}`),
     "/contribute",
   ];
@@ -78,6 +78,13 @@ export function metaFor(path: string): Meta {
     const d = DOMAIN_BY_ID[b];
     const raw = d.title.replace(/^The /, "").replace(/ Harness$/, "");
     const name = /agent$/i.test(raw) ? raw.replace(/ Agent$/, " agent") : raw + " agent";
+    if (c === "production") return {
+      ...base, type: "article",
+      title: `${name} in production: readiness, rollout, runbooks · ${SITE.name}`,
+      description: clip(`What it takes to run the ${d.shortTitle.toLowerCase()} for real: a readiness checklist, a trace of a real run, SLOs and cost, shadow and canary rollout, a threat model and incident runbooks.`),
+      jsonld: graph({ "@type": "TechArticle", headline: `${name}: production readiness`, url: abs(clean), author: { "@id": SITE.url + "/about/#author" }, about: ["AI agents in production", "Observability", "Incident response"], isPartOf: { "@id": SITE.url + "/#website" } }, person(),
+        crumbs([["Harnesses", "/"], [`${d.shortTitle}`, `/d/${d.id}`], ["Production", clean]])),
+    };
     if (c === "evals") return {
       ...base, type: "article",
       title: `${name} evals: scenarios, ablation and release gate · ${SITE.name}`,
