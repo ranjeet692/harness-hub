@@ -7,9 +7,10 @@ import { headTags, metaFor, routes } from "./seo";
 import { SITE } from "./site";
 import { DOMAINS } from "./domains";
 import { warmSuite } from "./evals/suite";
+import { warmTrace } from "./components/ProductionTab";
 
 /** Run every harness's eval suite once so prerendered Evals pages carry real numbers. */
-export async function warmEvals() { for (const d of DOMAINS) await warmSuite(d); }
+export async function warmEvals() { for (const d of DOMAINS) { await warmSuite(d); await warmTrace(d); } }
 
 export function render(path: string) {
   setServerPath(path);
